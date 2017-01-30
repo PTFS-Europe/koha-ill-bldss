@@ -93,6 +93,8 @@ sub new {
     $self->_config($params->{config});
     $self->_api(
         BLDSS->new( {
+	    # FIXME: Injecting branchcode for credentials here.  Not available
+	    # from Illrequest.pm yet -> per branch creds not working.
             api_keys => $self->_config->getCredentials($params->{branch}),
             api_url  => $self->_config->getApiUrl,
         } )
