@@ -132,6 +132,14 @@ sub _config {
     return $self->{config};
 }
 
+=head3 status_graph
+
+=cut
+
+sub status_graph {
+    return {};
+}
+
 #### Standard Method Calls
 
 =head3 confirm
