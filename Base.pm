@@ -21,7 +21,7 @@ use Modern::Perl;
 use Carp;
 
 use BLDSS;
-use C4::Branch;
+use Koha::Libraries;
 use Clone qw( clone );
 use Locale::Country;
 use XML::LibXML;
@@ -725,7 +725,7 @@ sub create_order {
     my $brw = $status->getProperty('borrower');
     my $branch_code = $status->getProperty('branch');
     my $brw_cat     = $brw->categorycode;
-    my $branch = C4::Branch::GetBranchDetail($branch_code);
+    my $branch = Koha::Libraries->find($branch_code);
     my $details;
     if ( $params->{speed} ) {
         $details = {
