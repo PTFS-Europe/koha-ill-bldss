@@ -137,7 +137,17 @@ sub _config {
 =cut
 
 sub status_graph {
-    return {};
+    return {
+	STAT => {
+	    prev_actions   => [ 'REQ' ],
+	    id             => 'STAT',
+	    name           => 'British Library Status',
+	    ui_method_name => 'Check British Library status',
+	    method         => 'status',
+	    next_actions   => [ ],
+	    ui_method_icon => 'fa-search',
+	},
+    };
 }
 
 sub name {
