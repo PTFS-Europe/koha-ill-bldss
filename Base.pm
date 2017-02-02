@@ -140,6 +140,10 @@ sub status_graph {
     return {};
 }
 
+sub name {
+    return "BLDSS";
+}
+
 #### Standard Method Calls
 
 =head3 confirm
