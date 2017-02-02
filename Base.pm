@@ -20,13 +20,13 @@ package Koha::Illbackends::BLDSS::Base;
 use Modern::Perl;
 use Carp;
 
-use BLDSS;
 use Koha::Libraries;
 use Clone qw( clone );
 use Locale::Country;
 use XML::LibXML;
 use Koha::Illrequest::Config;
 use Koha::Illbackends::BLDSS::XML;
+use Koha::Illbackends::BLDSS::BLDSS;
 use URI::Escape;
 use YAML;
 
@@ -92,7 +92,7 @@ sub new {
     bless( $self, $class );
     $self->_config($params->{config});
     $self->_api(
-        BLDSS->new( {
+        Koha::Illbackends::BLDSS::BLDSS->new( {
 	    # FIXME: Injecting branchcode for credentials here.  Not available
 	    # from Illrequest.pm yet -> per branch creds not working.
             api_keys => $self->_config->getCredentials($params->{branchcode}),
