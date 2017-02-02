@@ -95,7 +95,7 @@ sub new {
         BLDSS->new( {
 	    # FIXME: Injecting branchcode for credentials here.  Not available
 	    # from Illrequest.pm yet -> per branch creds not working.
-            api_keys => $self->_config->getCredentials($params->{branch}),
+            api_keys => $self->_config->getCredentials($params->{branchcode}),
             api_url  => $self->_config->getApiUrl,
         } )
     );
@@ -295,7 +295,7 @@ sub create {
                 $fields->{$k} = [ $v->{name}, $params->{$k} ];
             }
             $fields->{borrower} = [ "Borrower", $params->{brw} ];
-            $fields->{branch} = [ "Branch", $params->{branchcode} ];
+            $fields->{branchcode} = [ "Branch", $params->{branchcode} ];
             # Request we emit fields and values for confirmation.
             return {
                 status  => "",
@@ -746,7 +746,7 @@ sub create_order {
     my ( $self, $record, $status, $params ) = @_;
 
     my $brw = $status->getProperty('borrower');
-    my $branch_code = $status->getProperty('branch');
+    my $branch_code = $status->getProperty('branchcode');
     my $brw_cat     = $brw->categorycode;
     my $branch = Koha::Libraries->find($branch_code);
     my $details;
@@ -909,6 +909,7 @@ sub _search {
     my $query = $other->{query};
     my $brw = $other->{brw};
     my $branch = $other->{branchcode};
+    my $backend = $other->{backend};
     my %opts = map { $_ => $other->{$_} }
         qw/ author isbn issn title type max_results start_rec /;
     my $opts = \%opts;
@@ -940,7 +941,8 @@ sub _search {
     my $nav_qry = "?method=create&stage=search_cont&query="
         . uri_escape($query);
     $nav_qry .= "&brw=" . $brw;
-    $nav_qry .= "&branch=" . $branch;
+    $nav_qry .= "&branchcode=" . $branch;
+    $nav_qry .= "&backend=" . $backend;
     my $userstring = "[keywords: " . $query . "]";
     while ( my ($type, $value) = each $opts ) {
         $userstring .= "[" . join(": ", $type, $value) . "]";
@@ -962,7 +964,9 @@ sub _search {
     $response->{next} = $next;
     $response->{previous} = $previous;
     $response->{brw} = $brw;
-    $response->{branch} = $branch;
+    $response->{branchcode} = $branch;
+    $response->{backend} = $backend;
+    $response->{query} = $query;
     $response->{params} = $params;
     return $response;
 }
@@ -1033,7 +1037,7 @@ sub getDigitalRecipient {
     my $brn_dig_recs = $self->_config->getDigitalRecipients('branch');
     my $brw_dig_recs = $self->_config->getDigitalRecipients('brw_cat');
     my $brw_dig_rec = $brw_dig_recs->{$params->{brw_cat}} || '';
-    my $brn_dig_rec = $brn_dig_recs->{$params->{branch}} || '';
+    my $brn_dig_rec = $brn_dig_recs->{$params->{branchcode}} || '';
     my $def_dig_rec = $brw_dig_recs->{default} || '';
 
     my $dig_rec = "borrower";

@@ -22,9 +22,6 @@
 <p>We have now created your request.</p>
 
 [% ELSIF whole.stage == "init" %]
-<!-- Need to finish this form: keywords, etc, all not populated. I dont
-     believe this is essential at this point: they will just init to blank.
-     Then: return to ill-new.{tt,pl} and continue with other parts of create -->
 <h2>Search the British Library</h2>
 <p>Alternatively, <a href="[% here _ '?stage=manual&method=create' %]">click here for manual entry</a>.</p>
 <form method="POST" action=[% here %]>
@@ -32,34 +29,34 @@
     <legend>Search the British Library</legend>
     <input name="stage" id="stage" value="validate" type="hidden"/>
     <input name="method" id="method" value="create" type="hidden"/>
-    <input name="backend" id="method" value="[% backend %]" type="hidden"/>
+    <input name="backend" id="method" value="[% whole.value.other.backend %]" type="hidden"/>
     <ol>
       <li>
         <label class="required" for="query">Keywords:</label>
-        <input type="text" name="query" id="query" value="[% whole.value.query %]" />
+        <input type="text" name="query" id="query" value="[% whole.value.other.query %]" />
       </li>
       <li>
         <label for="isbn">ISBN:</label>
-        <input type="text" name="isbn" id="isbn" value="[% whole.value.isbn %]" />
+        <input type="text" name="isbn" id="isbn" value="[% whole.value.other.isbn %]" />
       </li>
       <li>
         <label for="issn">ISSN:</label>
-        <input type="text" name="issn" id="issn" value="[% whole.value.issn %]" />
+        <input type="text" name="issn" id="issn" value="[% whole.value.other.issn %]" />
       </li>
       <li>
         <label for="title">Title:</label>
-        <input type="text" name="title" id="title" value="[% whole.value.title %]" />
+        <input type="text" name="title" id="title" value="[% whole.value.other.title %]" />
       </li>
       <li>
         <label for="author">Author:</label>
-        <input type="text" name="author" id="author" value="[% whole.value.author %]" />
+        <input type="text" name="author" id="author" value="[% whole.value.other.author %]" />
       </li>
       <li>
         <label for="type">Type:</label>
         <select name="type" id="type">
             <option value=""/>
             [% FOREACH opt IN [ 'Book' 'Article' 'Journal' ] %]
-            [% IF ( whole.value.type == opt ) %]
+            [% IF ( whole.value.other.type == opt ) %]
             <option value="[% opt %]" selected="selected">[% opt %]</option>
             [% ELSE %]
             <option value="[% opt %]">[% opt %]</option>
@@ -74,16 +71,23 @@
     <ol>
       <li>
         <label class="required" for="brw">Borrower number or surname:</label>
-        <input type="text" name="brw" id="brw" type="text" value="[% whole.value.brw %]" />
+        <input type="text" name="brw" id="brw" type="text"
+	       value="[% whole.value.other.brw %]" />
       </li>
       <li>
         <label class="required" for="branchcode">Destination branch:</label>
         <select id="branchcode" name="branchcode">
           <option value="" />
           [% FOREACH branch IN branches %]
+          [% IF ( whole.value.other.branchcode == branch.branchcode ) %]
+          <option value="[% branch.branchcode %]" selected="selected">
+	    [% branch.branchname %]
+	  </option>
+          [% ELSE %]
           <option value="[% branch.branchcode %]">
             [% branch.branchname %]
           </option>
+          [% END %]
           [% END %]
         </select>
       </li>
@@ -132,15 +136,15 @@
 [% IF whole.value.0 %]
 <p class="bg-info">Results of search for: ”[% whole.userstring %]“
   [% url = back _ "?method=create&stage=init" %]
-  [% url = url _ "&backend=" _ whole.params.backend %]
-  [% url = url _ "&brw=" _ whole.params.brw %]
-  [% url = url _ "&branch=" _ whole.params.branch %]
-  [% url = url _ "&query=" _ whole.params.query %]
-  [% url = url _ "&issn=" _ whole.params.issn %]
-  [% url = url _ "&isbn=" _ whole.params.isbn %]
-  [% url = url _ "&title=" _ whole.params.title %]
-  [% url = url _ "&author=" _ whole.params.author %]
-  [% url = url _ "&type=" _ whole.params.type %]
+  [% url = url _ "&backend=" _ whole.backend %]
+  [% url = url _ "&brw=" _ whole.brw %]
+  [% url = url _ "&branchcode=" _ whole.branchcode %]
+  [% url = url _ "&query=" _ whole.params.other.query %]
+  [% url = url _ "&issn=" _ whole.params.other.issn %]
+  [% url = url _ "&isbn=" _ whole.params.other.isbn %]
+  [% url = url _ "&title=" _ whole.params.other.title %]
+  [% url = url _ "&author=" _ whole.params.other.author %]
+  [% url = url _ "&type=" _ whole.params.other.type %]
   <a href="[% url %]" title="Restart search"
      class="btn btn-default btn-sm"
      role="button">Amend your search</a>
@@ -165,7 +169,7 @@
         [% IF field.key == './uin' %]
         [% url = here _ "?method=create&stage=commit" %]
         [% url = url _ "&borrowernumber=" _ whole.brw %]
-        [% url = url _ "&branchcode=" _ whole.branch %]
+        [% url = url _ "&branchcode=" _ whole.branchcode %]
         [% url = url _ "&backend=" _ whole.backend %]
         [% url = url _ "&uin=" _ value %]
         <a href=[% url %]>
@@ -241,8 +245,8 @@
         <input type="text" name="brw" id="brw" type="text"/>
       </li>
       <li>
-        <label class="required" for="branch">Destination branch:</label>
-        <select name="branch" id="branch">
+        <label class="required" for="branchcode">Destination branch:</label>
+        <select name="branchcode" id="branchcode">
           <option value=""></option>
           [% FOREACH branch IN branches %]
           [% IF ( branch.selected ) %]
