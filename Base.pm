@@ -334,19 +334,29 @@ sub create {
         # We should have the data we need for an API derived Record.
         # ...Populate Illrequest
         my $request = $params->{request};
-	# FIXME: borrowernumber is barcode, but should be borrowernumber.
-        $request->borrower_id($other->{borrowernumber});
+        my $patron = Koha::Patrons->find({cardnumber => $other->{borrowernumber}});
+        my $bldss_result = $self->_find($other->{uin});
+        $request->borrower_id($patron->borrowernumber);
         $request->branch_id($other->{branchcode});
-        $request->medium($other->{medium});
+        $request->medium($other->{type});
         $request->status('NEW');
+        $request->backend($other->{backend});
         $request->placed(DateTime->now);
         $request->updated(DateTime->now);
         $request->store;
+        # ...Populate Illrequestattributes
+        while ( my ( $type, $value ) = each %{$bldss_result} ) {
+            Koha::Illrequestattribute->new({
+                illrequest_id => $request->illrequest_id,
+                type          => $type,
+                value         => $value->{value},
+            })->store;
+        }
         return {
             status  => "",
             message => "",
             error   => 0,
-            value   => $self->_find($params->{uin}),
+            value   => {},
             method  => "create",
             stage   => "commit",
         };
@@ -881,19 +891,11 @@ sub _find {
     my ( $self, $uin ) = @_;
     my $response = $self->_process($self->_api->search($uin));
     return $response if ( $response->{error} );
-    use Data::Dump qw/dump/;
     $response = $self->_parseResponse(
 	@{$response->{value}->result->records},
 	$self->getSpec->{record_props}, {}
     );
-    die dump($response);
     return $response;
-    return Koha::ILLRequest::Record->new($self->_config)
-	->create_from_api(
-	    $self->_parseResponse(
-		@{$response->{value}->result->records},
-		$self->getSpec->{record_props}, {})
-	);
 }
 
 =head3 search
@@ -939,10 +941,6 @@ sub _search {
     # Create summaries of the received response.
     my $spec = $self->getSpec->{record_props};
     foreach my $datum ( @{$response->{value}->result->records} ) {
-        # my $record =
-        #     Koha::ILLRequest::Record->new($self->_config)
-        #       ->create_from_api($self->_parseResponse($datum, $spec, {}))
-        #       ->getSummary;
 	my $record = $self->_parseResponse($datum, $spec, {});
         push (@return, $record);
     }

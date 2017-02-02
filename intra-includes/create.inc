@@ -168,6 +168,7 @@
       <td>
         [% IF field.key == './uin' %]
         [% url = here _ "?method=create&stage=commit" %]
+        [% url = url _ "&type=" _ whole.params.other.type %]
         [% url = url _ "&borrowernumber=" _ whole.brw %]
         [% url = url _ "&branchcode=" _ whole.branchcode %]
         [% url = url _ "&backend=" _ whole.backend %]
