@@ -188,7 +188,10 @@ The third stage returns 'commit' with details of the selected ILLRequest.
 
 sub create {
     my ( $self, $params ) = @_;
-    my $stage = $params->{stage};
+    my $other = $params->{other};
+    my $stage = $other->{stage};
+    use Data::Dump qw/dump/;
+    # die dump($other);
     if ( 'init' eq $stage || !$stage ) {
         # We just need to request the snippet that builds the Creation
         # interface.
@@ -202,7 +205,7 @@ sub create {
         };
     } elsif ( 'validate' eq $stage ) {
         my ( $brw_count, $brw )
-            = _validate_borrower($params->{'brw'}, $params->{'stage'});
+            = _validate_borrower($other->{'brw'}, $stage);
         my $result = {
             status  => "",
             message => "",
@@ -211,15 +214,15 @@ sub create {
             method  => "create",
             stage   => "init",
         };
-        if ( _fail($params->{'query'}) ) {
+	if ( _fail($other->{'query'}) ) {
             $result->{status} = "missing_query";
             $result->{value} = $params;
             return $result;
-        } elsif ( _fail($params->{'branch'}) ) {
+        } elsif ( _fail($other->{'branchcode'}) ) {
             $result->{status} = "missing_branch";
             $result->{value} = $params;
             return $result;
-        } elsif ( !GetBranchDetail($params->{'branch'}) ) {
+        } elsif ( !Koha::Libraries->find($other->{'branchcode'}) ) {
             $result->{status} = "invalid_branch";
             $result->{value} = $params;
             return $result;
@@ -236,7 +239,7 @@ sub create {
             return $result;
         } else {
             # We perform the search!
-            $params->{brw} = $brw->cardnumber;
+            $other->{brw} = $brw->cardnumber;
             return $self->_search($params);
         }
     } elsif ( 'search_cont' eq $stage ) {
@@ -269,10 +272,10 @@ sub create {
             method  => "create",
             stage   => "init",
         };
-        if ( _fail($params->{'branch'}) ) {
+        if ( _fail($params->{'branchcode'}) ) {
             $result->{status} = "missing_branch";
             return $result;
-        } elsif ( !GetBranchDetail($params->{'branch'}) ) {
+        } elsif ( !Koha::Libraries->find($params->{'branchcode'}) ) {
             $result->{status} = "invalid_branch";
             return $result;
         } elsif ( $brw_count == 0 ) {
@@ -292,7 +295,7 @@ sub create {
                 $fields->{$k} = [ $v->{name}, $params->{$k} ];
             }
             $fields->{borrower} = [ "Borrower", $params->{brw} ];
-            $fields->{branch} = [ "Branch", $params->{branch} ];
+            $fields->{branch} = [ "Branch", $params->{branchcode} ];
             # Request we emit fields and values for confirmation.
             return {
                 status  => "",
@@ -315,6 +318,16 @@ sub create {
         };
     } elsif ( 'commit' eq $stage ) {
         # We should have the data we need for an API derived Record.
+        # ...Populate Illrequest
+        my $request = $params->{request};
+	# FIXME: borrowernumber is barcode, but should be borrowernumber.
+        $request->borrower_id($other->{borrowernumber});
+        $request->branch_id($other->{branchcode});
+        $request->medium($other->{medium});
+        $request->status('NEW');
+        $request->placed(DateTime->now);
+        $request->updated(DateTime->now);
+        $request->store;
         return {
             status  => "",
             message => "",
@@ -495,7 +508,7 @@ sub status {
 sub validate_delivery_input {
     my ( $self, $params ) = @_;
     my ( $fmt, $brw, $brn, $recipient ) = (
-        $params->{service}->{format}, $params->{borrower}, $params->{branch},
+        $params->{service}->{format}, $params->{borrower}, $params->{branchcode},
         $params->{digital_recipient},
     );
     # FIXME: Here we can cross-reference services with API's services request.
@@ -583,18 +596,18 @@ sub _validate_borrower {
     # Perform cardnumber search.  If no results, perform surname search.
     # Return ( 0, undef ), ( 1, $brw ) or ( n, $brws )
     my ( $input, $action ) = @_;
-    my $borrowers = Koha::Borrowers->new;
+    my $patrons = Koha::Patrons->new;
     my ( $count, $brw );
     my $query = { cardnumber => $input };
     $query = { borrowernumber => $input } if ( $action eq 'search_cont' );
 
-    my $brws = $borrowers->search( $query );
+    my $brws = $patrons->search( $query );
     $count = $brws->count;
     my @criteria = qw/ surname firstname end /;
     while ( $count == 0 ) {
         my $criterium = shift @criteria;
         return ( 0, undef ) if ( "end" eq $criterium );
-        $brws = $borrowers->search( { $criterium => $input } );
+        $brws = $patrons->search( { $criterium => $input } );
         $count = $brws->count;
     }
     if ( $count == 1 ) {
@@ -854,12 +867,19 @@ sub _find {
     my ( $self, $uin ) = @_;
     my $response = $self->_process($self->_api->search($uin));
     return $response if ( $response->{error} );
+    use Data::Dump qw/dump/;
+    $response = $self->_parseResponse(
+	@{$response->{value}->result->records},
+	$self->getSpec->{record_props}, {}
+    );
+    die dump($response);
+    return $response;
     return Koha::ILLRequest::Record->new($self->_config)
-        ->create_from_api(
-            $self->_parseResponse(
-                @{$response->{value}->result->records},
-                $self->getSpec->{record_props}, {})
-        );
+	->create_from_api(
+	    $self->_parseResponse(
+		@{$response->{value}->result->records},
+		$self->getSpec->{record_props}, {})
+	);
 }
 
 =head3 search
@@ -885,10 +905,11 @@ We simply pass the options hashref straight to the backend.
 
 sub _search {
     my ( $self, $params ) = @_;
-    my $query = $params->{query};
-    my $brw = $params->{brw};
-    my $branch = $params->{branch};
-    my %opts = map { $_ => $params->{$_} }
+    my $other = $params->{other};
+    my $query = $other->{query};
+    my $brw = $other->{brw};
+    my $branch = $other->{branchcode};
+    my %opts = map { $_ => $other->{$_} }
         qw/ author isbn issn title type max_results start_rec /;
     my $opts = \%opts;
 
@@ -903,10 +924,11 @@ sub _search {
     # Create summaries of the received response.
     my $spec = $self->getSpec->{record_props};
     foreach my $datum ( @{$response->{value}->result->records} ) {
-        my $record =
-            Koha::ILLRequest::Record->new($self->_config)
-              ->create_from_api($self->_parseResponse($datum, $spec, {}))
-              ->getSummary;
+        # my $record =
+        #     Koha::ILLRequest::Record->new($self->_config)
+        #       ->create_from_api($self->_parseResponse($datum, $spec, {}))
+        #       ->getSummary;
+	my $record = $self->_parseResponse($datum, $spec, {});
         push (@return, $record);
     }
     # Add final values to response

@@ -32,6 +32,7 @@
     <legend>Search the British Library</legend>
     <input name="stage" id="stage" value="validate" type="hidden"/>
     <input name="method" id="method" value="create" type="hidden"/>
+    <input name="backend" id="method" value="[% backend %]" type="hidden"/>
     <ol>
       <li>
         <label class="required" for="query">Keywords:</label>
@@ -76,17 +77,13 @@
         <input type="text" name="brw" id="brw" type="text" value="[% whole.value.brw %]" />
       </li>
       <li>
-        <label class="required" for="branch">Destination branch:</label>
-        <select name="branch" id="branch">
-          <option value=""></option>
+        <label class="required" for="branchcode">Destination branch:</label>
+        <select id="branchcode" name="branchcode">
+          <option value="" />
           [% FOREACH branch IN branches %]
-          [% IF ( whole.value.branch == branch.value ) %]
-          <option value="[% branch.value %]" selected="selected">
+          <option value="[% branch.branchcode %]">
             [% branch.branchname %]
           </option>
-          [% ELSE %]
-          <option value="[% branch.value %]">[% branch.branchname %]</option>
-          [% END %]
           [% END %]
         </select>
       </li>
@@ -135,6 +132,7 @@
 [% IF whole.value.0 %]
 <p class="bg-info">Results of search for: ”[% whole.userstring %]“
   [% url = back _ "?method=create&stage=init" %]
+  [% url = url _ "&backend=" _ whole.params.backend %]
   [% url = url _ "&brw=" _ whole.params.brw %]
   [% url = url _ "&branch=" _ whole.params.branch %]
   [% url = url _ "&query=" _ whole.params.query %]
@@ -151,7 +149,9 @@
   <thead>
     <tr>
     [% FOREACH field IN whole.value.0 %]
-      <th id=[% field.key %]>[% field.value.0 %]</th>
+    [% IF field.value.inSummary %]
+      <th id=[% field.key %]>[% field.value.name %]</th>
+    [% END %]
     [% END %]
     </tr>
   </thead>
@@ -159,12 +159,14 @@
     [% FOREACH record IN whole.value %]
     <tr>
       [% FOREACH field IN record %]
-      [% value = field.value.1 %]
+      [% IF field.value.inSummary %]
+      [% value = field.value.value %]
       <td>
         [% IF field.key == './uin' %]
         [% url = here _ "?method=create&stage=commit" %]
-        [% url = url _ "&borrower=" _ whole.brw %]
-        [% url = url _ "&branch=" _ whole.branch %]
+        [% url = url _ "&borrowernumber=" _ whole.brw %]
+        [% url = url _ "&branchcode=" _ whole.branch %]
+        [% url = url _ "&backend=" _ whole.backend %]
         [% url = url _ "&uin=" _ value %]
         <a href=[% url %]>
           Request [% value %]
@@ -173,6 +175,7 @@
         [% value %]
         [% END %]
       </td>
+      [% END %]
       [% END %]
     </tr>
     [% END %]
