@@ -264,14 +264,14 @@ sub create {
 
 =head3 renew
 
-    my $response = $BLDSS->renew( $record, $status, $params );
+    my $response = $BLDSS->renew( $params );
 
 This method is not yet implemented and will trigger an error.
 
 =cut
 
 sub renew {
-    my ( $self, $record, $status, $params ) = @_;
+    my ( $self, $params ) = @_;
     return {
         error   => 1,
         status  => 'not_implemented',
@@ -285,7 +285,7 @@ sub renew {
 
 =head3 update_status
 
-    my $response = $BLDSS->update_status( $record, $status, $params );
+    my $response = $BLDSS->update_status( $params );
 
 Return an ILL standard response for the update_status method call.
 
@@ -294,11 +294,12 @@ For BLDSS, this method currently is a noop.  We simply return success.
 =cut
 
 sub update_status {
-    my ( $self, $record, $status, $params ) = @_;
+    my ( $self, $params ) = @_;
     # We have no business logic to perform as part of updating statuses.
     return {
-        error => 0,
-        method => 'confirm',
+        error  => 0,
+        method => 'update_status',
+        stage  => 'commit',
     };
 }
 
