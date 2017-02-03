@@ -233,8 +233,8 @@ sub create {
         my $request = $params->{request};
         my $patron = Koha::Patrons->find({cardnumber => $other->{borrowernumber}});
         my $bldss_result = $self->_find($other->{uin});
-        $request->borrower_id($patron->borrowernumber);
-        $request->branch_id($other->{branchcode});
+        $request->borrowernumber($patron->borrowernumber);
+        $request->branchcode($other->{branchcode});
         $request->medium($other->{type});
         $request->status('NEW');
         $request->backend($other->{backend});
