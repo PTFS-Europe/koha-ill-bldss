@@ -56,38 +56,8 @@ ILL Interface.
 
 sub new {
     my ( $class, $params ) = @_;
-    my $config = $params->{config};
-
     my $self = {
         keywords => [ "name", "accessor", "inSummary", "many" ],
-        primary_props => {
-            primary_access_url => {
-                name      => "Access URL",
-                inSummary => undef,
-            },
-            primary_cost => {
-                name      => "Cost",
-                inSummary => "true",
-            },
-            primary_manual => {
-                name      => "Manually Created",
-                inSummary => "true",
-            },
-            primary_notes_opac => {
-                name      => "Opac notes",
-                inSummary => undef,
-            },
-            primary_notes_staff => {
-                name      => "Staff notes",
-                inSummary => undef,
-            },
-            primary_order_id   => {
-                name      => "Order ID",
-                inSummary => undef,
-            },
-        },
-        data          => {},
-        accessors     => {},
     };
     bless( $self, $class );
     $self->_config($params->{config});
@@ -204,8 +174,6 @@ sub create {
     my ( $self, $params ) = @_;
     my $other = $params->{other};
     my $stage = $other->{stage};
-    use Data::Dump qw/dump/;
-    # die dump($other);
     if ( 'init' eq $stage || !$stage ) {
         # We just need to request the snippet that builds the Creation
         # interface.
@@ -1018,14 +986,6 @@ sub _parseResponse {
                 name      => $config->{$field}->{name},
                 inSummary => $config->{$field}->{inSummary},
             };
-            # FIXME: populate accessor if desired.  This breaks the
-            # functional-ish approach by referencing $self directly.
-            my $accessor = $config->{$field}->{accessor};
-            if ($accessor) {
-                $self->{accessors}->{$accessor} = sub {
-                    return $accum->{$field}->{value};
-                };
-            }
        }
     }
     return $accum;

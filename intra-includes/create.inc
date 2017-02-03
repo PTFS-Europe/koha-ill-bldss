@@ -23,7 +23,6 @@
 
 [% ELSIF whole.stage == "init" %]
 <h2>Search the British Library</h2>
-<p>Alternatively, <a href="[% here _ '?stage=manual&method=create' %]">click here for manual entry</a>.</p>
 <form method="POST" action=[% here %]>
   <fieldset class="rows">
     <legend>Search the British Library</legend>
