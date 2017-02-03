@@ -227,77 +227,6 @@ sub create {
     } elsif ( 'search_cont' eq $stage ) {
         # Continue search!
         return $self->_search($params);
-    } elsif ( 'manual' eq $stage ) {
-        # Build the manual entry fields.
-        my $fields = {};
-        my $mps = $self->getSpec->{manual_props};
-        while ( my ($k, $v) = each %{$mps} ) {
-            $fields->{$k} = $v->{name};
-        }
-        # Request we generate manual form
-        return {
-            status  => "",
-            message => "",
-            error   => 0,
-            value   => $fields,
-            method  => "create",
-            stage   => "manual",
-        };
-    } elsif ( 'manual_confirm' eq $stage ) {
-        my ( $brw_count, $brw )
-            = _validate_borrower($params->{'brw'}, $params->{'stage'});
-        my $result = {
-            status  => "",
-            message => "",
-            error   => 1,
-            value   => {},
-            method  => "create",
-            stage   => "init",
-        };
-        if ( _fail($params->{'branchcode'}) ) {
-            $result->{status} = "missing_branch";
-            return $result;
-        } elsif ( !Koha::Libraries->find($params->{'branchcode'}) ) {
-            $result->{status} = "invalid_branch";
-            return $result;
-        } elsif ( $brw_count == 0 ) {
-            $result->{status} = "invalid_borrower";
-            return $result;
-        } elsif ( $brw_count > 1 ) {
-            # We must select a specific borrower.
-            $params->{brw} = $brw;
-            $result->{value} = $params;
-            $result->{stage} = "borrowers";
-            $result->{error} = 0;
-            return $result;
-        } else  {
-            my $fields = {};
-            my $mps = $self->getSpec->{manual_props};
-            while ( my ($k, $v) = each %{$mps} ) {
-                $fields->{$k} = [ $v->{name}, $params->{$k} ];
-            }
-            $fields->{borrower} = [ "Borrower", $params->{brw} ];
-            $fields->{branchcode} = [ "Branch", $params->{branchcode} ];
-            # Request we emit fields and values for confirmation.
-            return {
-                status  => "",
-                message => "",
-                error   => 0,
-                value   => $fields,
-                method  => "create",
-                stage   => "manual_confirm",
-            };
-        }
-    } elsif ( 'commit_manual' eq $stage ) {
-        # We should have the data we need for manually created Record.
-        return {
-            status  => "",
-            message => "",
-            error   => 0,
-            value   => $self->_populate($params),
-            method  => "create",
-            stage   => "commit",
-        };
     } elsif ( 'commit' eq $stage ) {
         # We should have the data we need for an API derived Record.
         # ...Populate Illrequest
@@ -331,27 +260,6 @@ sub create {
     } else {
         die "Create Unexpected Stage";
     }
-}
-
-=head3 list
-
-    my $response = $BLDSS->list( $record, $status, $params );
-
-This method is not yet implemented and will trigger an error.
-
-=cut
-
-sub list {
-    my ( $self, $record, $status, $params ) = @_;
-    return {
-        error   => 1,
-        status  => 'not_implemented',
-        message => 'List requests is not implemented for BLDSS yet.',
-        method  => 'list',
-        stage   => 'commit',
-        future  => 0,
-        value   => {},
-    };
 }
 
 =head3 renew
@@ -835,26 +743,6 @@ sub prices {
     return $response;
 }
 
-sub reference {
-    my ( $self, @params ) = @_;
-    return $self->_process($self->_api->reference(@params));
-}
-
-sub _populate {
-    my ( $self, $params ) = @_;
-    my $content = {};
-    my $mps = $self->getSpec->{manual_props};
-    while ( my ( $id, $properties ) = each %{$mps} ) {
-        $content->{$id} = {
-            value     => $params->{$id},
-            name      => $properties->{name},
-            inSummary => $properties->{inSummary} || 0,
-        };
-    }
-    return Koha::ILLRequest::Record->new($self->_config)
-        ->create_from_api($content, 1);
-}
-
 sub _find {
     my ( $self, $uin ) = @_;
     my $response = $self->_process($self->_api->search($uin));
@@ -949,22 +837,6 @@ sub _search {
     $response->{query} = $query;
     $response->{params} = $params;
     return $response;
-}
-
-sub error {
-    my ( $self, @params ) = @_;
-    return $self->_process($self->_api->error(@params));
-}
-
-=head3 _getStatusCode
-
-    my $illStatus = _getStatusCode($status, $message);
-
-An introspective call turning API error codes into ILL Module error codes.
-
-=cut
-
-sub _getStatusCode {
 }
 
 sub _parseResponse {
@@ -1115,22 +987,6 @@ sub getSpec {
 }
 
 ###### YAML Spec Processing! ######
-
-=head3 getProperties
-
-    $properties = $config->getProperties($name);
-
-Return the properties of type $NAME, a data structure derived from parsing the
-ILL yaml config.
-
-At present we provide "record" properties.
-
-=cut
-
-sub getProperties {
-    my ( $self, $name ) = @_;
-    return $self->{$name . "_props"};
-}
 
 =head3 _deriveProperties
 
