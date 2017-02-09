@@ -1,4 +1,4 @@
-package Koha::Illbackends::BLDSS::XML;
+package Koha::Illbackends::BLDSS::BLDSS::XML;
 
 # Copyright 2015 PTFS Europe Ltd
 #
@@ -67,10 +67,10 @@ sub element2class {
     my ($self, $class_name) = @_;
     $class_name = ucfirst($class_name);
     $class_name =~ s/-(.?)/uc($1)/e;
-    $class_name = "Koha::Illbackends::BLDSS::XML::$class_name";
+    $class_name = "Koha::Illbackends::BLDSS::BLDSS::XML::$class_name";
 }
 
-package Koha::Illbackends::BLDSS::XML::Element;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Element;
 
 use base qw(XML::LibXML::Element);
 use vars qw($AUTOLOAD @elements @attributes);
@@ -132,7 +132,7 @@ sub get_one_object {
     } elsif ( $results->size == 0 ) {
         return 0;
     }
-    return Koha::Illbackends::BLDSS::XML->rebless($results->shift);
+    return Koha::Illbackends::BLDSS::BLDSS::XML->rebless($results->shift);
 }
 
 # Stubs
@@ -147,9 +147,9 @@ sub attributes {
 
 # ApiResponse Object
 
-package Koha::Illbackends::BLDSS::XML::ApiResponse;
+package Koha::Illbackends::BLDSS::BLDSS::XML::ApiResponse;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw(timestamp status message);
@@ -167,9 +167,9 @@ sub result {
 
 # Result Object.
 
-package Koha::Illbackends::BLDSS::XML::Result;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Result;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw(currency region copyrightVat loanRenewalCost);
@@ -203,7 +203,7 @@ sub records {
 
 sub services {
     my $self = shift;
-    my @services = map {Koha::Illbackends::BLDSS::XML->rebless($_)}
+    my @services = map {Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_)}
       $self->findnodes("./services/service");
     return  \@services;
 }
@@ -216,9 +216,9 @@ sub get_service {
 
 # Availability Object.
 
-package Koha::Illbackends::BLDSS::XML::Availability;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Availability;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw(loanAvailabilityDate copyAvailabilityDate copyrightFee
@@ -232,16 +232,16 @@ sub new {
 
 sub formats {
     my $self = shift;
-    my @formats = map {Koha::Illbackends::BLDSS::XML->rebless($_)}
+    my @formats = map {Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_)}
       $self->findnodes("./availableFormats/availableFormat");
     return \@formats;
 }
 
 # AvailableFormat Object.
 
-package Koha::Illbackends::BLDSS::XML::AvailableFormat;
+package Koha::Illbackends::BLDSS::BLDSS::XML::AvailableFormat;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw(deliveryModifiers);
@@ -263,23 +263,23 @@ sub deliveryFormat {
 
 sub speeds {
     my $self = shift;
-    my @speeds = map {Koha::Illbackends::BLDSS::XML->rebless($_)}
+    my @speeds = map {Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_)}
       $self->findnodes("./availableSpeeds/speed");
     return \@speeds;
 }
 
 sub qualities {
     my $self = shift;
-    my @qualities = map {Koha::Illbackends::BLDSS::XML->rebless($_)}
+    my @qualities = map {Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_)}
       $self->findnodes("./availableQuality/quality");
     return \@qualities;
 }
 
 # DeliveryFormat Object.
 
-package Koha::Illbackends::BLDSS::XML::DeliveryFormat;
+package Koha::Illbackends::BLDSS::BLDSS::XML::DeliveryFormat;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub attributes {
     return qw(key);
@@ -292,9 +292,9 @@ sub new {
 
 # Speed Object.
 
-package Koha::Illbackends::BLDSS::XML::Speed;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Speed;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub attributes {
     return qw(key);
@@ -307,9 +307,9 @@ sub new {
 
 # Quality Object.
 
-package Koha::Illbackends::BLDSS::XML::Quality;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Quality;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub attributes {
     return qw(key);
@@ -322,9 +322,9 @@ sub new {
 
 # Service Object.
 
-package Koha::Illbackends::BLDSS::XML::Service;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Service;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw();
@@ -341,7 +341,7 @@ sub new {
 
 sub formats {
     my $self = shift;
-    my @formats = map {Koha::Illbackends::BLDSS::XML->rebless($_)}
+    my @formats = map {Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_)}
       $self->findnodes("./format");
     return \@formats;
 }
@@ -354,9 +354,9 @@ sub get_format {
 
 # Record Object.
 
-package Koha::Illbackends::BLDSS::XML::Record;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Record;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw();
@@ -373,9 +373,9 @@ sub new {
 
 # Format Object.
 
-package Koha::Illbackends::BLDSS::XML::Format;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Format;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw();
@@ -392,7 +392,7 @@ sub new {
 
 sub prices {
     my $self = shift;
-    my @prices = map {Koha::Illbackends::BLDSS::XML->rebless($_)}
+    my @prices = map {Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_)}
       $self->findnodes("./price");
     return \@prices;
 }
@@ -410,9 +410,9 @@ sub get_price {
 
 # Price Object.
 
-package Koha::Illbackends::BLDSS::XML::Price;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Price;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw();
@@ -431,9 +431,9 @@ sub new {
 
 # This is based on the assumption of Synchroneous requests.
 
-package Koha::Illbackends::BLDSS::XML::NewOrder;
+package Koha::Illbackends::BLDSS::BLDSS::XML::NewOrder;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw( orderline customerReference service format speed quality
@@ -448,9 +448,9 @@ sub new {
 
 # orderline Object
 
-package Koha::Illbackends::BLDSS::XML::Orderline;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Orderline;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw( customerRef note requestor overallStatus metadata
@@ -465,7 +465,7 @@ sub cost {
 
 sub historyEvents {
     my $self = shift;
-    my @events = map {Koha::Illbackends::BLDSS::XML->rebless($_)}
+    my @events = map {Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_)}
       $self->findnodes("./history/event");
     return  \@events;
 }
@@ -482,9 +482,9 @@ sub new {
 
 # deliveryDetails Object
 
-package Koha::Illbackends::BLDSS::XML::DeliveryDetails;
+package Koha::Illbackends::BLDSS::BLDSS::XML::DeliveryDetails;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw( type email );
@@ -505,9 +505,9 @@ sub new {
 # Tricky because of the namespace.  Write custom accessors to fetch the
 # values.
 
-package Koha::Illbackends::BLDSS::XML::Address;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Address;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub _cscore_get_one_object {
     my ( $self, $fragment ) = @_;
@@ -569,9 +569,9 @@ sub new {
 
 # event Object
 
-package Koha::Illbackends::BLDSS::XML::Event;
+package Koha::Illbackends::BLDSS::BLDSS::XML::Event;
 
-use base qw(Koha::Illbackends::BLDSS::XML::Element);
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
     return qw( eventType additionalInfo );

@@ -25,8 +25,9 @@ use Clone qw( clone );
 use Locale::Country;
 use XML::LibXML;
 use Koha::Illrequest::Config;
-use Koha::Illbackends::BLDSS::XML;
-use Koha::Illbackends::BLDSS::BLDSS;
+use Koha::Illbackends::BLDSS::BLDSS::API;
+use Koha::Illbackends::BLDSS::BLDSS::Config;
+use Koha::Illbackends::BLDSS::BLDSS::XML;
 use URI::Escape;
 use YAML;
 
@@ -60,15 +61,15 @@ sub new {
         keywords => [ "name", "accessor", "inSummary", "many" ],
     };
     bless( $self, $class );
-    $self->_config($params->{config});
-    $self->_api(
-        Koha::Illbackends::BLDSS::BLDSS->new( {
-	    # FIXME: Injecting branchcode for credentials here.  Not available
-	    # from Illrequest.pm yet -> per branch creds not working.
-            api_keys => $self->_config->getCredentials($params->{branchcode}),
-            api_url  => $self->_config->getApiUrl,
-        } )
-    );
+    # Need to extract the information we need from $params->config
+    # then build our own config with that and store that in _config
+    # FIXME: Injecting branchcode for credentials here.  Not available
+    # from Illrequest.pm yet -> per branch creds not working.
+    # api_keys => $self->_config->getCredentials($params->{branchcode}),
+    my $config = Koha::Illbackends::BLDSS::BLDSS::Config->new($params->{config});
+    my $api = Koha::Illbackends::BLDSS::BLDSS::API->new($config);
+    $self->_config($config);
+    $self->_api($api);
     return $self;
 }
 
@@ -140,14 +141,14 @@ responses is carried out by the helper procedures `availability', `prices' and
 =cut
 
 sub confirm {
-    my ( $self, $record, $status, $params ) = @_;
-    my $stage = $params->{stage};
+    my ( $self, $params ) = @_;
+    my $stage = $params->{other}->{stage};
     if ( 'availability' eq $stage || !$stage ) {
-        return $self->availability($record);
+        return $self->availability($params);
     } elsif ( 'pricing' eq $stage ) {
         return $self->prices($params);
     } elsif ( 'commit' eq $stage ) {
-        return $self->create_order($record, $status, $params);
+        return $self->create_order($params);
     } else {
         die "Confirm Unexpected Stage";
     }
@@ -542,7 +543,7 @@ sub _process {
         "\nDetail: ", $self->_api->error->{content}
     ) if ( $self->_api->error );
 
-    my $re = Koha::Illbackends::BLDSS::XML->new->load_xml(
+    my $re = Koha::Illbackends::BLDSS::BLDSS::XML->new->load_xml(
         { string => $response }
     );
 
@@ -975,7 +976,7 @@ sub getSpec {
     # This comment will stay as is for a few commits, then it will be
     # rewritten purely to elucidate the role of our spec.yaml.
 
-    my $spec  = _load_api_specification($self->_config->getApiSpecFile);
+    my $spec  = YAML::Load($self->_config->getApiSpec);
     my $record_props =
         $self->_deriveProperties({source => $spec->{record}});
     my $manual_props =
@@ -1080,22 +1081,6 @@ sub _recurse {
         }
     }
     return $wip;
-}
-
-=head3 _load_api_specification
-
-    _load_api_specification(FILENAME);
-
-Return a hashref, the result of loading FILENAME using the YAML
-loader, or raise an error.
-
-=cut
-
-sub _load_api_specification {
-    my ( $config_file ) = @_;
-    die "The ill config file (" . $config_file . ") does not exist"
-      if not -e $config_file;
-    return YAML::LoadFile($config_file);
 }
 
 =head1 AUTHOR

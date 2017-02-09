@@ -1,4 +1,4 @@
-package Koha::Illbackends::BLDSS::BLDSS;
+package Koha::Illbackends::BLDSS::BLDSS::API;
 
 use strict;
 use warnings;
@@ -42,19 +42,12 @@ use XML::LibXML;
 use Digest::HMAC_SHA1;
 use MIME::Base64;
 
-use Koha::Illbackends::BLDSS::BLDSS::Config;
-
 sub new {
-    my ( $class, $params ) = @_;
+    my ( $class, $config ) = @_;
     my $self  = {
-        api_url     => 'http://apitest.bldss.bl.uk',
         ua          => LWP::UserAgent->new,
-        config      => Koha::Illbackends::BLDSS::BLDSS::Config
-	    ->new($params->{api_keys}),
+        config      => $config,
     };
-
-    $self->{api_url} = $params->{api_url}
-        if ( $params->{api_url} );
 
     bless $self, $class;
     return $self;
@@ -64,7 +57,7 @@ sub search {
     my ( $self, $search_str, $opt ) = @_;
 
     # search string can use AND OR and brackets
-    my $url_string = $self->{api_url} . '/api/search/';
+    my $url_string = $self->{config}->api_url . '/api/search/';
     my $url        = URI->new($url_string);
     my @key_pairs  = ( 'id', $search_str );
     if ( ref $opt eq 'HASH' ) {
@@ -103,7 +96,7 @@ sub search {
 sub match {
     my ( $self, $bib, $opt ) = @_;
 
-    my $url_string = $self->{api_url} . '/api/match';
+    my $url_string = $self->{config}->api_url . '/api/match';
     my %bibfields  = (
         title             => 'MatchRequest.BibData.titleLevel.title',
         author            => 'MatchRequest.BibData.authorLevel.author',
@@ -183,7 +176,7 @@ sub availability {
         }
     }
 
-    my $url_string = $self->{api_url} . '/api/availability';
+    my $url_string = $self->{config}->api_url . '/api/availability';
     my $url        = URI->new($url_string);
     $url->query_form( \@param );
     return $self->_request( { method => 'GET', url => $url, auth => 1 } );
@@ -213,7 +206,7 @@ sub approvals {
         }
     }
 
-    my $url_string = $self->{api_url} . '/api/approvals';
+    my $url_string = $self->{config}->api_url . '/api/approvals';
     my $url        = URI->new($url_string);
     if (@param) {
         $url->query_form( \@param );
@@ -224,14 +217,14 @@ sub approvals {
 sub customer_preferences {
     my $self = shift;
 
-    my $url_string = $self->{api_url} . '/api/customer';
+    my $url_string = $self->{config}->api_url . '/api/customer';
     my $url        = URI->new($url_string);
     return $self->_request( { method => 'GET', url => $url, auth => 1 } );
 }
 
 sub cancel_order {
     my ( $self, $orderline_ref ) = @_;
-    my $url_string = $self->{api_url} . "/api/orders/$orderline_ref";
+    my $url_string = $self->{config}->api_url . "/api/orders/$orderline_ref";
     my $url        = URI->new($url_string);
     my $additional = { id => $orderline_ref };
     return $self->_request( {
@@ -242,7 +235,7 @@ sub cancel_order {
 sub create_order {
     my ( $self, $order_ref ) = @_;
     my $xml        = _encode_order($order_ref);
-    my $url_string = $self->{api_url} . '/api/orders';
+    my $url_string = $self->{config}->api_url . '/api/orders';
     my $url        = URI->new($url_string);
     return $self->_request( { method => 'POST', url => $url, content => $xml, auth => 1 } );
 }
@@ -253,7 +246,7 @@ sub order {
     my $query_vals = [ 'id', $order_ref ];
 
     # order_ref can be orderline ref or request id
-    my $url_string = $self->{api_url} . "/api/orders/$order_ref";
+    my $url_string = $self->{config}->api_url . "/api/orders/$order_ref";
     my $url        = URI->new($url_string);
     $url->query_form($query_vals);
     return $self->_request( { method => 'GET', url => $url, auth => 1 } );
@@ -264,7 +257,7 @@ sub orders {
 
     # return multiple orders based on criteria in selection
     #
-    my $url_string = $self->{api_url} . '/api/orders';
+    my $url_string = $self->{config}->api_url . '/api/orders';
     my $url        = URI->new($url_string);
     my %map_sel    = (
         start_date  => 'OrdersRequest.startDate',
@@ -306,7 +299,7 @@ sub orders {
 
 sub renew_loan {
     my ( $self, $orderline, $requestor ) = @_;
-    my $url_string = $self->{api_url} . '/api/orders/renewLoan';
+    my $url_string = $self->{config}->api_url . '/api/orders/renewLoan';
     my $url        = URI->new($url_string);
 
     my $doc               = XML::LibXML::Document->new();
@@ -325,7 +318,7 @@ sub renew_loan {
 
 sub reportProblem {
     my ( $self, $param ) = @_;
-    my $url_string = $self->{api_url} . '/api/orders/renewLoan';
+    my $url_string = $self->{config}->api_url . '/api/orders/renewLoan';
     my $url        = URI->new($url_string);
 
     my $doc     = XML::LibXML::Document->new();
@@ -347,7 +340,7 @@ sub reportProblem {
 
 sub prices {
     my ( $self, $param ) = @_;
-    my $url_string = $self->{api_url} . '/api/prices';
+    my $url_string = $self->{config}->api_url . '/api/prices';
     my $url        = URI->new($url_string);
     my @optional_param;
     foreach my $opt (qw( region service format currency )) {
@@ -379,14 +372,14 @@ sub reference {
     if ( !exists $valid_reference_calls{$reference_type} ) {
         return;
     }
-    my $url_string = $self->{api_url} . "/api/reference/$reference_type";
+    my $url_string = $self->{config}->api_url . "/api/reference/$reference_type";
     my $url        = URI->new($url_string);
     return $self->_request( { method => 'GET', url => $url } );
 }
 
 sub rejected_requests {
     my ( $self, $options ) = @_;
-    my $url_string = $self->{api_url} . '/api/reference/rejectedRequests';
+    my $url_string = $self->{config}->api_url . '/api/reference/rejectedRequests';
     my $url        = URI->new($url_string);
     my @opt;
     if ( exists $options->{start} ) {
@@ -404,7 +397,7 @@ sub rejected_requests {
 
 sub estimated_despatch_date {
     my ( $self, $options ) = @_;
-    my $url_string = $self->{api_url} . '/api/utility/estimatedDespatch';
+    my $url_string = $self->{config}->api_url . '/api/utility/estimatedDespatch';
     my $url        = URI->new($url_string);
     my @opt;
     if ( exists $options->{availability_date} ) {
