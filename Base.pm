@@ -125,6 +125,33 @@ sub name {
     return "BLDSS";
 }
 
+=head3 metadata
+
+Return a hashref containing canonical values from the key/value
+illrequestattributes store.
+
+In BLDSS we provide the following k/v fields:
+- Title
+- Author
+- UIN
+- Year
+
+=cut
+
+sub metadata {
+    my ( $self, $request ) = @_;
+    my $attrs = $request->illrequestattributes;
+    return {
+        UIN    => $attrs->find({ type => './uin' })->value,
+        Title  => $attrs->find({ type => './metadata/titleLevel/title' })->value,
+        Author => $attrs->find({ type => './metadata/titleLevel/author' })->value,
+        Year   => $attrs->find({ type => './metadata/itemLevel/year' })->value,
+        "Item Title" => $attrs->find({ type => './metadata/itemOfInterestLevel/title' })->value,
+        "Item Pages" => $attrs->find({ type => './metadata/itemOfInterestLevel/pages' })->value,
+        "Item Author" => $attrs->find({ type => './metadata/itemOfInterestLevel/author' })->value,
+    }
+}
+
 #### Standard Method Calls
 
 =head3 confirm
@@ -410,7 +437,7 @@ sub status {
 sub validate_delivery_input {
     my ( $self, $params ) = @_;
     my ( $fmt, $brw, $brn, $recipient ) = (
-        $params->{service}->{format}, $params->{borrower}, $params->{branchcode},
+        $params->{service}->{format}, $params->{borrower}, $params->{branch},
         $params->{digital_recipient},
     );
     # FIXME: Here we can cross-reference services with API's services request.
@@ -437,9 +464,9 @@ sub validate_delivery_input {
         my $target = $brw->email || "";
         if ( 'branch' eq $recipient ) {
             if ( $brn->{branchreplyto} ) {
-                $target = $brn->{branchreplyto};
+                $target = $brn->branchreplyto;
             } else {
-                $target = $brn->{branchemail};
+                $target = $brn->branchemail;
             }
         }
         die "Digital delivery: invalid $recipient type email address."
@@ -598,10 +625,11 @@ sub _process {
 }
 
 sub availability {
-    my ( $self, $record ) = @_;
+    my ( $self, $params ) = @_;
+    my $metadata = $self->metadata($params->{request});
     my $response = $self->_process($self->_api->availability(
-        $record->getProperty('id'),
-        { year => $record->getProperty('year') }
+        $metadata->{UIN},
+        { year => $metadata->{Year} }
     ));
 
     return $response if ( $response->{error} );
@@ -637,6 +665,7 @@ sub availability {
         availableImmediately => [ "Available immediately?",
                                   $availability->availableImmediately ],
         formats              => [ "Formats", \@formats ],
+        illrequest_id        => $params->{request}->illrequest_id,
     };
     $response->{method} = "confirm";
     $response->{stage} = "availability";
@@ -645,23 +674,32 @@ sub availability {
 }
 
 sub create_order {
-    my ( $self, $record, $status, $params ) = @_;
+    my ( $self, $params ) = @_;
 
-    my $brw = $status->getProperty('borrower');
-    my $branch_code = $status->getProperty('branchcode');
-    my $brw_cat     = $brw->categorycode;
-    my $branch = Koha::Libraries->find($branch_code);
+    my $request = $params->{request};
+    my $brw = Koha::Patrons->find($request->borrowernumber);
+    my $branch = Koha::Libraries->find($request->branchcode);
+    my $brw_cat = $brw->categorycode;
     my $details;
-    if ( $params->{speed} ) {
+    my $final_out = {
+        error    => 0,
+        status   => '',
+        message  => '',
+        method   => 'confirm',
+        stage    => 'commit',
+        next     => 'illview',
+        value    => {}
+    };
+    if ( $params->{other}->{speed} ) {
         $details = {
-            speed   => $params->{speed},
-            quality => $params->{quality},
-            format  => $params->{format},
+            speed   => $params->{other}->{speed},
+            quality => $params->{other}->{quality},
+            format  => $params->{other}->{format},
         };
     } else {
         $details = $self->getDefaultFormat( {
             brw_cat => $brw_cat,
-            branch  => $branch_code,
+            branch  => $branch->branchcode,
         } );
     }
     my ( $invalid, $delivery ) = $self->validate_delivery_input( {
@@ -675,45 +713,55 @@ sub create_order {
     } );
     return $invalid if ( $invalid );
 
+    my $metadata = $self->metadata($params->{request});
     my $final_details = {
         type     => "S",
         Item     => {
-            uin     => $record->getProperty('id'),
+            uin     => $metadata->{UIN},
             # At least one item of interest criterium is required for 'paper'
             # book requests.  But this is not always provided by the BL.
             # Through no fault of our own, we may end in a dead-end.
             itemOfInterestLevel => {
-                title  => $record->getProperty('ioiTitle'),
-                pages  => $record->getProperty('ioiPages'),
-                author => $record->getProperty('ioiAuthor'),
+                title  => $metadata->{'Item Title'},
+                pages  => $metadata->{'Item Pages'},
+                author => $metadata->{'Item Author'},
             }
         },
         service  => $details,
         Delivery => $delivery,
         # Optional params:
         requestor         => join(" ", $brw->firstname, $brw->surname),
-        customerReference => $params->{customerReference},
+        customerReference => $request->illrequest_id,
         payCopyright => $self->getPayCopyright($branch),
     };
 
     my $response = $self->_process($self->_api->create_order($final_details));
-    return $response if $response->{error};
+    if ( $response->{error} ) {
+        $final_out->{error} = 1;
+        $final_out->{value};
+        return $final_out;
+    }
 
-    $response->{method} = "confirm";
-    $response->{stage} = "commit";
-    $response->{future} = 0;
-    $response->{order_id} = $response->{value}->result->newOrder->orderline;
-    $response->{cost} = $response->{value}->result->newOrder->totalCost;
-    $response->{acces_url} = $response->{value}->result->newOrder->downloadUrl;
-    return $response;
+    $request->orderid($response->{value}->result->newOrder->orderline);
+    $request->cost($response->{value}->result->newOrder->totalCost);
+    $request->accessurl($response->{value}->result->newOrder->downloadUrl);
+    $request->status("REQ");
+    $request->store;
+
+    $final_out->{value} = {
+        status => "On order",
+        cost   => $request->cost,
+    };
+    return $final_out;
 }
 
 sub prices {
     my ( $self, $params ) = @_;
+    my $format = $params->{other}->{'format'};
+    my $speed = $params->{other}->{'speed'};
+    my $quality = $params->{other}->{'quality'};
     my $coordinates = {
-        format  => $params->{'format'},
-        speed   => $params->{'speed'},
-        quality => $params->{'quality'},
+        format  => $format, speed   => $speed, quality => $quality,
     };
     my $response =  $self->_process($self->_api->prices);
     return $response if ( $response->{error} );
@@ -722,10 +770,9 @@ sub prices {
     my $service = 0;
     my $services = $result->services;
     foreach ( @{$services} ) {
-        my $format = $_->get_format($params->{format});
-        if ( $format ) {
-            $price = $format->get_price($params->{speed}, $params->{quality}) ||
-                $format->get_price($params->{speed});
+        my $frmt = $_->get_format($format);
+        if ( $frmt ) {
+            $price = $frmt->get_price($speed, $quality);
             $service = $_;
             last;
         }
@@ -738,6 +785,7 @@ sub prices {
         price           => [ "Price", $price->textContent ],
         service         => [ "Service", $service->{id} ],
         coordinates     => $coordinates,
+        illrequest_id   => $params->{request}->illrequest_id
     };
     $response->{method} = "confirm";
     $response->{stage} = "pricing";

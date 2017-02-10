@@ -29,6 +29,7 @@ sub new {
         api_application      => $config->{api_application}      || "BLAPI8IJdN",
         api_application_auth => $config->{api_application_auth} || "m7eZz1CCu7",
         api_url              => $config->{api_url}              || "http://apitest.bldss.bl.uk",
+        config               => $config,
     };
 
     bless $self, $class;
@@ -86,6 +87,20 @@ sub getDefaultFormats {
     $values->{default} = $self->{configuration}->{default_formats}->{default};
     return $values;
 }
+
+=head3 getDigitalRecipients
+
+    my $digitalRecipient = $config->getDigitalRecipient('brw_cat' | 'branch')
+
+Return the hash of digitalRecipient settings defined by our config.
+
+=cut
+
+sub getDigitalRecipients {
+    my ( $self, $type ) = @_;
+    return $self->{config}->getDigitalRecipients($type);
+}
+
 
 =head3 getCredentials
 
