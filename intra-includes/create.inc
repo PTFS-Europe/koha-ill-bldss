@@ -200,9 +200,18 @@
   [% END %]
 </p>
 [% ELSE %]
-<p>
-  No results were found for: “[% whole.search %]”
-  <a href="[% back %]" title="Amend your search"
+<p class="bg-info">No results found for: ”[% whole.userstring %]“
+  [% url = back _ "?method=create&stage=init" %]
+  [% url = url _ "&backend=" _ whole.backend %]
+  [% url = url _ "&brw=" _ whole.brw %]
+  [% url = url _ "&branchcode=" _ whole.branchcode %]
+  [% url = url _ "&query=" _ whole.params.other.query %]
+  [% url = url _ "&issn=" _ whole.params.other.issn %]
+  [% url = url _ "&isbn=" _ whole.params.other.isbn %]
+  [% url = url _ "&title=" _ whole.params.other.title %]
+  [% url = url _ "&author=" _ whole.params.other.author %]
+  [% url = url _ "&type=" _ whole.params.other.type %]
+  <a href="[% url %]" title="Restart search"
      class="btn btn-default btn-sm"
      role="button">Amend your search</a>
 </p>

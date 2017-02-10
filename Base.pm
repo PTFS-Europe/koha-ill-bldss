@@ -793,19 +793,15 @@ sub _search {
 
     # Perform the search in the API
     my $response = $self->_process($self->_api->search($query, $opts));
-    return $response if ( $response->{error} );
 
-    my @return;
-    # Create summaries of the received response.
-    my $spec = $self->getSpec->{record_props};
-    foreach my $datum ( @{$response->{value}->result->records} ) {
-	my $record = $self->_parseResponse($datum, $spec, {});
-        push (@return, $record);
-    }
-    # Add final values to response
-    $response->{value} = \@return;
+    # Augment Response with standard values
     $response->{method} = "create";
     $response->{stage} = "search";
+    $response->{brw} = $brw;
+    $response->{branchcode} = $branch;
+    $response->{backend} = $backend;
+    $response->{query} = $query;
+    $response->{params} = $params;
 
     # Build user search string & paging query string
     my $nav_qry = "?method=create&stage=search_cont&query="
@@ -819,6 +815,25 @@ sub _search {
         $nav_qry .= "&" . join("=", $type, $value)
             unless ( 'start_rec' eq $type );
     }
+    $response->{userstring} = $userstring;
+
+    # Handle errors
+    if ( $response->{error} && $response->{status} eq 'search_fail' ) {
+        # Ignore 'search_fail' result: empty resultset
+        $response->{error} = 0
+    } elsif ( $response->{error} ) {
+        # Return on other error
+        return $response;
+    }
+
+    # Else populate response values.
+    my @return;
+    my $spec = $self->getSpec->{record_props};
+    foreach my $datum ( @{$response->{value}->result->records} ) {
+	my $record = $self->_parseResponse($datum, $spec, {});
+        push (@return, $record);
+    }
+    $response->{value} = \@return;
 
     # Finalise paging query string
     my $result_count = @return;
@@ -829,15 +844,10 @@ sub _search {
     my $prev_pos = $current_pos - $result_count;
     my $previous = $nav_qry . "&start_rec=" . $prev_pos
         if ( $prev_pos >= 1 );
-
-    $response->{userstring} = $userstring;
     $response->{next} = $next;
     $response->{previous} = $previous;
-    $response->{brw} = $brw;
-    $response->{branchcode} = $branch;
-    $response->{backend} = $backend;
-    $response->{query} = $query;
-    $response->{params} = $params;
+
+    # Return search results
     return $response;
 }
 
