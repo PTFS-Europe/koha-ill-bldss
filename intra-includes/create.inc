@@ -1,5 +1,3 @@
-[% rspValue = whole.value %]
-
 [% IF whole.error %]
 [% IF whole.status == 'missing_fields' %]
 <p><em>Please Note:</em> Some mandatory fields are missing.</p>

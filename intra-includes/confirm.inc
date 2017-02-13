@@ -12,7 +12,7 @@
 <form method="POST" action=[% here %]>
   <fieldset id="format">
     <input type="hidden" name="format" value="[% format.key.1 %]" />
-    <input type="hidden" name="illrequest_id" value="[% whole.value.illrequest_id %]" />
+    <input type="hidden" name="illrequest_id" value="[% rspValue.illrequest_id %]" />
     <input type="hidden" name="method" value="[% whole.method %]" />
     <input type="hidden" name="stage" value="[% whole.future %]" />
     <h4>[% format.format.0 %]: [% format.format.1 %]</h4>
@@ -51,7 +51,7 @@
   <input name="service" id="service"
          value="[% rspValue.service.1 %]" type="hidden"/>
 
-  <input type="hidden" name="illrequest_id" value="[% whole.value.illrequest_id %]" />
+  <input type="hidden" name="illrequest_id" value="[% rspValue.illrequest_id %]" />
   <input type="hidden" name="method" value="[% whole.method %]" />
   <input type="hidden" name="stage" value="[% whole.future %]" />
   <input type="submit" value="Place request" />
