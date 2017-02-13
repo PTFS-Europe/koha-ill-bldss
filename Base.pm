@@ -733,7 +733,7 @@ sub prices {
     $response->{value} = {
         currency        => [ "Currency", $result->currency ],
         region          => [ "Region", $result->region ],
-        copyrightVat    => [ "CopyrightVat", $result->copyrightVat ],
+        copyrightVat    => [ "Copyright VAT", $result->copyrightVat ],
         loanRenewalCost => [ "Loan Renewal Cost", $result->loanRenewalCost ],
         price           => [ "Price", $price->textContent ],
         service         => [ "Service", $service->{id} ],
