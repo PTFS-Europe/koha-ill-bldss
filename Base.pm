@@ -339,13 +339,19 @@ sub update_status {
 
 Return an ILL standard response for the cancel method call.
 
-As for all cancel calls, $params will simply contain 'order_id'.
-
 =cut
 
 sub cancel {
-    my ( $self, $record, $status, $params ) = @_;
-    return $self->_process($self->_api->cancel_order($params->{order_id}));
+    my ( $self, $params ) = @_;
+    my $response = $self->_process(
+        $self->_api->cancel_order($params->{request}->orderid)
+    );
+    return $response if ( $response->{error} );
+    return {
+        method => 'cancel',
+        stage  => 'commit',
+        next   => 'illview',
+    };
 }
 
 =head3 status
@@ -353,8 +359,6 @@ sub cancel {
     my $response = $BLDSS->status( $record, $status, $params );
 
 Return an ILL standard response for the status method call.
-
-As for all status calls, $params will simply contain 'order_id'.
 
 =cut
 
