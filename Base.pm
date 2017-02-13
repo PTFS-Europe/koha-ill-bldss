@@ -284,6 +284,7 @@ sub create {
             value   => {},
             method  => "create",
             stage   => "commit",
+            next    => "illview",
         };
     } else {
         die "Create Unexpected Stage";
