@@ -321,6 +321,8 @@ For BLDSS, this method currently is a noop.  We simply return success.
 
 =cut
 
+# FIXME: Believe this is obsolete now.  We handle status update hooks directly
+# through method invocations.
 sub update_status {
     my ( $self, $params ) = @_;
     # We have no business logic to perform as part of updating statuses.
@@ -950,46 +952,10 @@ sub getDefaultFormat {
 
 sub getSpec {
     my ( $self ) = @_;
-    # We need to decide whether we create slots for each object, or whether we
-    # abandon the YAML spec approach entirely.
-    #
-    # We no longer make the assumption: we removed all types but the Record
-    # type.
-    #
-    # ALL APIs will have a record type as it defines the data that the API
-    # provides as part of its 'find' or 'search' methods.  It contains things
-    # like 'title' or 'author'.
-    #
-    # Whilst all APIs will have such a definition, the jury is out as to
-    # whether it makes sense to enforce the use of a yaml file for this record
-    # definition, or whether it should be left entirely to the backend.  The
-    # latter is probably better.
-    #
-    # Assuming that, we should either:
-    #
-    # a) move yaml loading to the BLDSS backend, so it does not pollute
-    # general configuration; or
-    #
-    # b) remove the yaml system from the BLDSS backend all together.
-    #
-    # For option (a), my preference, we could have the yaml spec path be part
-    # of BLDSS, and have the YAML loader in BLDSS backend.
-    #
-    # Going with option (a)!
-    #
-    # This comment will stay as is for a few commits, then it will be
-    # rewritten purely to elucidate the role of our spec.yaml.
-
     my $spec  = YAML::Load($self->_config->getApiSpec);
-    my $record_props =
-        $self->_deriveProperties({source => $spec->{record}});
-    my $manual_props =
-        $self->_deriveProperties({source => $spec->{record}, prefix => "m"});
-
-    return {
-        record_props => $record_props,
-        manual_props => $manual_props,
-    };
+    return $self->_deriveProperties({
+        source => $spec->{record}
+    });
 }
 
 ###### YAML Spec Processing! ######
