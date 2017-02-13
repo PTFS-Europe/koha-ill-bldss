@@ -357,79 +357,25 @@ As for all status calls, $params will simply contain 'order_id'.
 =cut
 
 sub status {
-    my ( $self, $record, $status, $params ) = @_;
-    my $status = $self->_process($self->_api->order($params->{order_id}));
-    # querying message on this response fails for some reason.
-    if ( !$status->{error} ) {
-        my $orderline  = $status->{value}->result->orderline;
-        my $delDetails = $orderline->deliveryDetails;
-        $status->{value} = {
-            cost              => [
-                "Total cost", $orderline->cost
-            ],
-            customerReference => [
-                "Customer Reference", $orderline->customerRef
-            ],
-            note              => [
-                "Note", $orderline->note
-            ],
-            requestor         => [
-                "Requestor", $orderline->requestor
-            ],
-            status            => [
-                "Status", $orderline->overallStatus
-            ],
-        };
-
-        # Add extra delivery details
-        my @deliveryDetails;
-        push @deliveryDetails, {
-            deliveryType => ["Delivery type", $delDetails->type ]
-        };
-        if ( 'digital' eq $delDetails->type ) {
-            push @deliveryDetails, {
-                deliveryEmail => [ "Delivery email", $delDetails->email ]
-            };
-        } elsif ( 'physical' eq $delDetails->type ) {
-            my $address = $delDetails->address;
-
-            my @titles = (
-                "Address line 1", "Address line 2", "Address line 3",
-                "Country", "County or state", "Department", "Postcode",
-                "Province or region", "Town or city"
-            );
-            for ( qw/ AddressLine1 AddressLine2 AddressLine3 Country
-                      CountyOrState Department PostOrZipCode
-                      ProvinceOrRegion TownOrCity / ) {
-                push @deliveryDetails, {
-                    'delivery' . $_ => [ shift(@titles), $address->$_ ]
-                };
-            }
-        } else {
-            die "unexpected delivery type: $delDetails->type";
-        }
-
-        $status->{value}->{delivery} = [
-            "Delivery details", \@deliveryDetails
-        ];
-
-        # Add history elements
-        my @history;
-        for ( @{$orderline->historyEvents} ) {
-            push @history, {
-                time => [ "Timestamp", $_->time ],
-                type => [ "Event type", $_->eventType ],
-                info => [ "Additional notes", $_->additionalInfo ],
-            }
-        }
-        $status->{value}->{history} = [
-            "Request history", \@history
-        ];
+    my ( $self, $params ) = @_;
+    my $stage = $params->{other}->{stage};
+    if ( $stage eq 'init' || !$stage ) {
+        my $status = $self->_process($self->_api->order($params->{request}->orderid));
         $status->{method} = "status";
-        $status->{stage} = "commit";
-        $status->{future} = 0;
+        $status->{stage} = "show_status";
+        return $status;
+    } else {
+        # Assume stage is commit, we just return.
+        return {
+            status  => "",
+            message => "",
+            error   => 0,
+            value   => {},
+            method  => "status",
+            next    => "illview",
+            stage   => "commit",
+        };
     }
-    return $status;
 }
 
 #### Helpers
