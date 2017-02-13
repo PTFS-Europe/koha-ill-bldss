@@ -751,7 +751,7 @@ sub _find {
     return $response if ( $response->{error} );
     $response = $self->_parseResponse(
 	@{$response->{value}->result->records},
-	$self->getSpec->{record_props}, {}
+	$self->getSpec, {}
     );
     return $response;
 }
@@ -828,7 +828,7 @@ sub _search {
 
     # Else populate response values.
     my @return;
-    my $spec = $self->getSpec->{record_props};
+    my $spec = $self->getSpec;
     foreach my $datum ( @{$response->{value}->result->records} ) {
 	my $record = $self->_parseResponse($datum, $spec, {});
         push (@return, $record);
