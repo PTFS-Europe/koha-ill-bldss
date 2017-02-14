@@ -690,9 +690,7 @@ sub create_order {
 
     my $response = $self->_process($self->_api->create_order($final_details));
     if ( $response->{error} ) {
-        $final_out->{error} = 1;
-        $final_out->{value};
-        return $final_out;
+        die $response->{message};
     }
 
     $request->orderid($response->{value}->result->newOrder->orderline);
