@@ -67,7 +67,7 @@
     <legend>Borrower Options</legend>
     <ol>
       <li>
-        <label class="required" for="brw">Borrower number or surname:</label>
+        <label class="required" for="brw">Card number or surname:</label>
         <input type="text" name="brw" id="brw" type="text"
 	       value="[% whole.value.other.brw %]" />
       </li>
@@ -297,6 +297,7 @@
     [% END %]
     [% END %]
   </ol>
+  </fieldset>
   <fieldset class="action">
     <input name="method" id="method" value="create" type="hidden"/>
     <input name="stage" id="stage" value="commit_manual" type="hidden"/>
