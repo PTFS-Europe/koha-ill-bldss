@@ -10,30 +10,38 @@
 <h3>[% rspValue.formats.0 %]</h3>
 [% FOREACH format IN rspValue.formats.1 %]
 <form method="POST" action=[% here %]>
-  <fieldset id="format">
+  <fieldset class="format">
     <input type="hidden" name="format" value="[% format.key.1 %]" />
     <input type="hidden" name="illrequest_id" value="[% rspValue.illrequest_id %]" />
     <input type="hidden" name="method" value="[% whole.method %]" />
     <input type="hidden" name="stage" value="[% whole.future %]" />
     <h4>[% format.format.0 %]: [% format.format.1 %]</h4>
     <h5>[% format.speeds.0 %]</h5>
-    [% FOREACH speed IN format.speeds.1 %]
-    <span id="speed">
-      [% speed.speed.0 %]: [% speed.speed.1 %]
-    </span>
-    <input name="speed" id="speed" type="radio"
-           value=[% speed.key.1 %] />
-    [% END %]
+    <ul>
+      [% FOREACH speed IN format.speeds.1 %]
+      <li>
+        <input name="speed" id="speed" type="radio"
+               value=[% speed.key.1 %] />
+        <span id="speed">
+          [% speed.speed.0 %]: [% speed.speed.1 %]
+        </span>
+      </li>
+      [% END %]
+    </ul>
     <h5>[% format.qualities.0 %]</h5>
-    [% FOREACH quality IN format.qualities.1 %]
-    <span id="quality">
-      [% quality.quality.0 %]: [% quality.quality.1 %]
-    </span>
-    <input name="quality" id="quality" type="radio"
-           value=[% quality.key.1 %] />
-    [% END %]
+    <ul>
+      [% FOREACH quality IN format.qualities.1 %]
+      <li>
+        <input name="quality" id="quality" type="radio"
+               value=[% quality.key.1 %] />
+        <span id="quality">
+          [% quality.quality.0 %]: [% quality.quality.1 %]
+        </span>
+      </li>
+      [% END %]
+    </ul>
     <br/>
-    <input type="submit" value="Check this price" />
+    <input class="btn btn-default" type="submit" value="Check this price" />
   </fieldset>
 </form>
 [% END %]
@@ -54,7 +62,7 @@
   <input type="hidden" name="illrequest_id" value="[% rspValue.illrequest_id %]" />
   <input type="hidden" name="method" value="[% whole.method %]" />
   <input type="hidden" name="stage" value="[% whole.future %]" />
-  <input type="submit" value="Place request" />
+  <input class="btn btn-default" type="submit" value="Place request" />
 </form>
 [% ELSIF whole.stage == "commit" %]
 <!-- Final stage! We simply emit the summary returned in ill -->
