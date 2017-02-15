@@ -131,22 +131,25 @@
 [% ELSIF whole.stage == 'search' OR whole.stage == 'search_cont' %]
 <h2>Search results</h2>
 [% IF whole.value.0 %]
-<p class="bg-info">Results of search for: ”[% whole.userstring %]“
-  [% url = back _ "?method=create&stage=init" %]
-  [% url = url _ "&backend=" _ whole.backend %]
-  [% url = url _ "&brw=" _ whole.brw %]
-  [% url = url _ "&branchcode=" _ whole.branchcode %]
-  [% url = url _ "&query=" _ whole.params.other.query %]
-  [% url = url _ "&issn=" _ whole.params.other.issn %]
-  [% url = url _ "&isbn=" _ whole.params.other.isbn %]
-  [% url = url _ "&title=" _ whole.params.other.title %]
-  [% url = url _ "&author=" _ whole.params.other.author %]
-  [% url = url _ "&type=" _ whole.params.other.type %]
+<p role="alert" class="bg-info alert alert-success">
+  <span id="search-summary" class="pull-left">
+    Results of search for: ”[% whole.userstring %]“
+    [% url = back _ "?method=create&amp;stage=init" %]
+    [% url = url _ "&amp;backend=" _ whole.backend %]
+    [% url = url _ "&amp;brw=" _ whole.brw %]
+    [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
+    [% url = url _ "&amp;query=" _ whole.params.other.query %]
+    [% url = url _ "&amp;issn=" _ whole.params.other.issn %]
+    [% url = url _ "&amp;isbn=" _ whole.params.other.isbn %]
+    [% url = url _ "&amp;title=" _ whole.params.other.title %]
+    [% url = url _ "&amp;author=" _ whole.params.other.author %]
+    [% url = url _ "&amp;type=" _ whole.params.other.type %]
+  </span>
   <a href="[% url %]" title="Restart search"
-     class="btn btn-default btn-sm"
+     class="btn btn-default btn-sm pull-right"
      role="button">Amend your search</a>
 </p>
-<table>
+<table class="table table-bordered table-striped">
   <thead>
     <tr>
     [% FOREACH field IN whole.value.0 %]
@@ -164,12 +167,12 @@
       [% value = field.value.value %]
       <td>
         [% IF field.key == './uin' %]
-        [% url = here _ "?method=create&stage=commit" %]
-        [% url = url _ "&type=" _ whole.params.other.type %]
-        [% url = url _ "&borrowernumber=" _ whole.brw %]
-        [% url = url _ "&branchcode=" _ whole.branchcode %]
-        [% url = url _ "&backend=" _ whole.backend %]
-        [% url = url _ "&uin=" _ value %]
+        [% url = here _ "?method=create&amp;stage=commit" %]
+        [% url = url _ "&amp;type=" _ whole.params.other.type %]
+        [% url = url _ "&amp;borrowernumber=" _ whole.brw %]
+        [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
+        [% url = url _ "&amp;backend=" _ whole.backend %]
+        [% url = url _ "&amp;uin=" _ value %]
         <a href=[% url %]>
           Request [% value %]
         </a>
@@ -198,19 +201,22 @@
   [% END %]
 </p>
 [% ELSE %]
-<p class="bg-info">No results found for: ”[% whole.userstring %]“
-  [% url = back _ "?method=create&stage=init" %]
-  [% url = url _ "&backend=" _ whole.backend %]
-  [% url = url _ "&brw=" _ whole.brw %]
-  [% url = url _ "&branchcode=" _ whole.branchcode %]
-  [% url = url _ "&query=" _ whole.params.other.query %]
-  [% url = url _ "&issn=" _ whole.params.other.issn %]
-  [% url = url _ "&isbn=" _ whole.params.other.isbn %]
-  [% url = url _ "&title=" _ whole.params.other.title %]
-  [% url = url _ "&author=" _ whole.params.other.author %]
-  [% url = url _ "&type=" _ whole.params.other.type %]
+<p role="alert" class="bg-info alert alert-danger">
+  <span id="search-summary" class="pull-left">
+    No results found for: ”[% whole.userstring %]“
+    [% url = back _ "?method=create&amp;stage=init" %]
+    [% url = url _ "&amp;backend=" _ whole.backend %]
+    [% url = url _ "&amp;brw=" _ whole.brw %]
+    [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
+    [% url = url _ "&amp;query=" _ whole.params.other.query %]
+    [% url = url _ "&amp;issn=" _ whole.params.other.issn %]
+    [% url = url _ "&amp;isbn=" _ whole.params.other.isbn %]
+    [% url = url _ "&amp;title=" _ whole.params.other.title %]
+    [% url = url _ "&amp;author=" _ whole.params.other.author %]
+    [% url = url _ "&amp;type=" _ whole.params.other.type %]
+  </span>
   <a href="[% url %]" title="Restart search"
-     class="btn btn-default btn-sm"
+     class="btn btn-default btn-sm pull-right"
      role="button">Amend your search</a>
 </p>
 [% END %]
