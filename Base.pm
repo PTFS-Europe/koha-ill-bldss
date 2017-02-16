@@ -214,8 +214,10 @@ sub create {
             stage   => "init",
         };
     } elsif ( 'validate' eq $stage ) {
+        # 'cardnumber' here could also be a surname (or in the case of
+        # search_cont it will be a borrowernumber).
         my ( $brw_count, $brw )
-            = _validate_borrower($other->{'brw'}, $stage);
+            = _validate_borrower($other->{'cardnumber'}, $stage);
         my $result = {
             status  => "",
             message => "",
@@ -249,7 +251,7 @@ sub create {
             return $result;
         } else {
             # We perform the search!
-            $other->{brw} = $brw->cardnumber;
+            $other->{borrowernumber} = $brw->borrowernumber;
             return $self->_search($params);
         }
     } elsif ( 'search_cont' eq $stage ) {
@@ -259,7 +261,7 @@ sub create {
         # We should have the data we need for an API derived Record.
         # ...Populate Illrequest
         my $request = $params->{request};
-        my $patron = Koha::Patrons->find({cardnumber => $other->{borrowernumber}});
+        my $patron = Koha::Patrons->find($other->{borrowernumber});
         my $bldss_result = $self->_find($other->{uin});
         $request->borrowernumber($patron->borrowernumber);
         $request->branchcode($other->{branchcode});
@@ -779,7 +781,8 @@ sub _search {
     my ( $self, $params ) = @_;
     my $other = $params->{other};
     my $query = $other->{query};
-    my $brw = $other->{brw};
+    my $borrowernumber = $other->{borrowernumber};
+    my $brw = Koha::Patrons->find($borrowernumber);
     my $branch = $other->{branchcode};
     my $backend = $other->{backend};
     my %opts = map { $_ => $other->{$_} }
@@ -795,7 +798,8 @@ sub _search {
     # Augment Response with standard values
     $response->{method} = "create";
     $response->{stage} = "search";
-    $response->{brw} = $brw;
+    $response->{borrowernumber} = $borrowernumber;
+    $response->{cardnumber} = $brw->cardnumber;
     $response->{branchcode} = $branch;
     $response->{backend} = $backend;
     $response->{query} = $query;
@@ -804,7 +808,7 @@ sub _search {
     # Build user search string & paging query string
     my $nav_qry = "?method=create&stage=search_cont&query="
         . uri_escape($query);
-    $nav_qry .= "&brw=" . $brw;
+    $nav_qry .= "&borrowernumber=" . $borrowernumber;
     $nav_qry .= "&branchcode=" . $branch;
     $nav_qry .= "&backend=" . $backend;
     my $userstring = "[keywords: " . $query . "]";

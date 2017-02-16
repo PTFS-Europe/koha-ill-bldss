@@ -67,9 +67,9 @@
     <legend>Borrower Options</legend>
     <ol>
       <li>
-        <label class="required" for="brw">Card number or surname:</label>
-        <input type="text" name="brw" id="brw" type="text"
-	       value="[% whole.value.other.brw %]" />
+        <label class="required" for="cardnumber">Card number or surname:</label>
+        <input type="text" name="cardnumber" id="cardnumber" type="text"
+	       value="[% whole.value.other.cardnumber %]" />
       </li>
       <li>
         <label class="required" for="branchcode">Destination branch:</label>
@@ -106,8 +106,8 @@
     [% IF opt.key == "brw" %]
     <ol>
       <li>
-        <label class="required" for="brw">Borrower</label>
-        <select name="brw" id="brw">
+        <label class="required" for="borrowernumber">Borrower</label>
+        <select name="borrowernumber" id="borrowernumber">
           <option value=""></option>
           [% FOREACH brw IN opt.value %]
           <option value="[% brw.cardnumber %]">
@@ -136,6 +136,7 @@
     Results of search for: ”[% whole.userstring %]“
     [% url = back _ "?method=create&amp;stage=init" %]
     [% url = url _ "&amp;backend=" _ whole.backend %]
+    [% url = url _ "&amp;cardnumber=" _ whole.cardnumber %]
     [% url = url _ "&amp;brw=" _ whole.brw %]
     [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
     [% url = url _ "&amp;query=" _ whole.params.other.query %]
@@ -169,7 +170,7 @@
         [% IF field.key == './uin' %]
         [% url = here _ "?method=create&amp;stage=commit" %]
         [% url = url _ "&amp;type=" _ whole.params.other.type %]
-        [% url = url _ "&amp;borrowernumber=" _ whole.brw %]
+        [% url = url _ "&amp;borrowernumber=" _ whole.borrowernumber %]
         [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
         [% url = url _ "&amp;backend=" _ whole.backend %]
         [% url = url _ "&amp;uin=" _ value %]
@@ -206,7 +207,7 @@
     No results found for: ”[% whole.userstring %]“
     [% url = back _ "?method=create&amp;stage=init" %]
     [% url = url _ "&amp;backend=" _ whole.backend %]
-    [% url = url _ "&amp;brw=" _ whole.brw %]
+    [% url = url _ "&amp;cardnumber=" _ whole.cardnumber %]
     [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
     [% url = url _ "&amp;query=" _ whole.params.other.query %]
     [% url = url _ "&amp;issn=" _ whole.params.other.issn %]
@@ -254,8 +255,8 @@
     <legend>Borrower Options</legend>
     <ol>
       <li>
-        <label class="required" for="brw">Borrower number or surname:</label>
-        <input type="text" name="brw" id="brw" type="text"/>
+        <label class="required" for="borrowernumber">Borrower number or surname:</label>
+        <input type="text" name="borrowernumber" id="borrowernumber" type="text"/>
       </li>
       <li>
         <label class="required" for="branchcode">Destination branch:</label>

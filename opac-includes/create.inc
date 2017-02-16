@@ -131,6 +131,7 @@
                 Results of search for: &quot;[% whole.userstring %]&quot;
                 [% url = back _ "?method=create&amp;stage=init" %]
                 [% url = url _ "&amp;backend=" _ whole.backend %]
+                [% url = url _ "&amp;borrowernumber=" _ whole.borrowernumber %]
                 [% url = url _ "&amp;brw=" _ whole.brw %]
                 [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
                 [% url = url _ "&amp;query=" _ whole.params.other.query %]
@@ -164,7 +165,7 @@
                                     [% IF field.key == './uin' %]
                                         [% url = here _ "?method=create&amp;stage=commit" %]
                                         [% url = url _ "&amp;type=" _ whole.params.other.type %]
-                                        [% url = url _ "&amp;borrowernumber=" _ whole.brw %]
+                                        [% url = url _ "&amp;borrowernumber=" _ whole.borrowernumber %]
                                         [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
                                         [% url = url _ "&amp;backend=" _ whole.backend %]
                                         [% url = url _ "&amp;uin=" _ value %]
