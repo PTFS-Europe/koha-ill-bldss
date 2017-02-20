@@ -1,0 +1,13 @@
+
+* Additional configuration to be set in koha-conf.xml
+
+  Currently our configuration accepts 5 additional parameters from
+  koha-conf.xml:
+  - <api_key>
+  - <api_key_auth>
+  - <api_application>
+  - <api_application_auth>
+  - <api_url>
+  Normally only <api_application> and <api_application_auth> need to
+  be set.  <api_url> defaults to the test environment, so it should be
+  set when switching to production, to "https://api.bldss.bl.uk".
