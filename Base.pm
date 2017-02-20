@@ -145,10 +145,14 @@ sub metadata {
         UIN    => $attrs->find({ type => './uin' })->value,
         Title  => $attrs->find({ type => './metadata/titleLevel/title' })->value,
         Author => $attrs->find({ type => './metadata/titleLevel/author' })->value,
+        Publisher => $attrs->find({ type => './metadata/titleLevel/publisher' })->value,
+        "Shelf mark" => $attrs->find({ type => './metadata/titleLevel/shelfmark' })->value,
         Year   => $attrs->find({ type => './metadata/itemLevel/year' })->value,
-        "Item Title" => $attrs->find({ type => './metadata/itemOfInterestLevel/title' })->value,
-        "Item Pages" => $attrs->find({ type => './metadata/itemOfInterestLevel/pages' })->value,
-        "Item Author" => $attrs->find({ type => './metadata/itemOfInterestLevel/author' })->value,
+        Issue  => $attrs->find({ type => './metadata/itemLevel/issue' })->value,
+        Volume  => $attrs->find({ type => './metadata/itemLevel/volume' })->value,
+        "Item part title" => $attrs->find({ type => './metadata/itemOfInterestLevel/title' })->value,
+        "Item part pages" => $attrs->find({ type => './metadata/itemOfInterestLevel/pages' })->value,
+        "Item part author" => $attrs->find({ type => './metadata/itemOfInterestLevel/author' })->value,
     }
 }
 
