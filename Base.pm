@@ -189,13 +189,6 @@ Return an ILL standard response for the create method call.
 
 For BLDSS, this is a composite method.
 
-The first stage returns the request for form generation.
-
-The second stage returns either a list of search results, or 'commit' if we
-had manual entry, with details for creating the ILLRequest from manual form.
-
-The third stage returns 'commit' with details of the selected ILLRequest.
-
 =cut
 
 sub create {
@@ -291,49 +284,6 @@ sub create {
     } else {
         die "Create Unexpected Stage";
     }
-}
-
-=head3 renew
-
-    my $response = $BLDSS->renew( $params );
-
-This method is not yet implemented and will trigger an error.
-
-=cut
-
-sub renew {
-    my ( $self, $params ) = @_;
-    return {
-        error   => 1,
-        status  => 'not_implemented',
-        message => 'Renew request is not implemented for BLDSS yet.',
-        method  => 'renew',
-        stage   => 'commit',
-        future  => 0,
-        value   => {},
-    };
-}
-
-=head3 update_status
-
-    my $response = $BLDSS->update_status( $params );
-
-Return an ILL standard response for the update_status method call.
-
-For BLDSS, this method currently is a noop.  We simply return success.
-
-=cut
-
-# FIXME: Believe this is obsolete now.  We handle status update hooks directly
-# through method invocations.
-sub update_status {
-    my ( $self, $params ) = @_;
-    # We have no business logic to perform as part of updating statuses.
-    return {
-        error  => 0,
-        method => 'update_status',
-        stage  => 'commit',
-    };
 }
 
 =head3 cancel
@@ -585,7 +535,8 @@ sub availability {
         $metadata->{UIN},
         { year => $metadata->{Year} }
     ));
-
+    $response->{method} = "confirm";
+    $response->{stage} = "availability";
     return $response if ( $response->{error} );
     my $availability = $response->{value}->result->availability;
     my @formats;
@@ -621,8 +572,6 @@ sub availability {
         formats              => [ "Formats", \@formats ],
         illrequest_id        => $params->{request}->illrequest_id,
     };
-    $response->{method} = "confirm";
-    $response->{stage} = "availability";
     $response->{future} = "pricing";
     return $response;
 }
