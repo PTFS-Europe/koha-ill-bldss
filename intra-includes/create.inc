@@ -165,7 +165,7 @@
     <tr>
       [% FOREACH field IN record %]
       [% IF field.value.inSummary %]
-      [% value = field.value.value %]
+      [% value = field.value.value || "N/A" %]
       <td>
         [% IF field.key == './uin' %]
         [% url = here _ "?method=create&amp;stage=commit" %]

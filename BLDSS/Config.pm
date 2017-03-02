@@ -150,6 +150,7 @@ sub getApiSpec {
   type:
     name: Material Type
     accessor: type
+    inSummary: yes
   isAvailableImmediateley:
     name: Available now?
   metadata:
@@ -206,8 +207,10 @@ sub getApiSpec {
     itemOfInterestLevel:
       title:
         name: Part Title
+        inSummary: yes
       author:
         name: Part Author
+        inSummary: yes
       pages:
         name: Pages
 ";
