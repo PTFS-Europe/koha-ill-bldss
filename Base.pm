@@ -303,7 +303,12 @@ sub cancel {
     my $response = $self->_process(
         $self->_api->cancel_order($params->{request}->orderid)
     );
-    return $response if ( $response->{error} );
+    if ( $response->{error} ) {
+        $response->{method} = 'cancel';
+        $response->{stage} = 'init';
+        return $response;
+    };
+    return $response
     return {
         method => 'cancel',
         stage  => 'commit',
