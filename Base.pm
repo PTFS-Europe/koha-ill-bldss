@@ -223,11 +223,7 @@ sub create {
             method  => "create",
             stage   => "init",
         };
-	if ( _fail($other->{'query'}) ) {
-            $result->{status} = "missing_query";
-            $result->{value} = $params;
-            return $result;
-        } elsif ( _fail($other->{'branchcode'}) ) {
+        if ( _fail($other->{'branchcode'}) ) {
             $result->{status} = "missing_branch";
             $result->{value} = $params;
             return $result;

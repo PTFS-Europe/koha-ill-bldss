@@ -29,7 +29,7 @@
             <input name="backend" id="method" value="[% whole.value.other.backend %]" type="hidden"/>
             <ol>
                 <li>
-                    <label class="required" for="query">Keywords:</label>
+                    <label for="query">Keywords:</label>
                     <input type="text" name="query" id="query" value="[% whole.value.other.query %]" />
                 </li>
                 <li>
@@ -41,11 +41,11 @@
                     <input type="text" name="issn" id="issn" value="[% whole.value.other.issn %]" />
                 </li>
                 <li>
-                    <label for="title">Title:</label>
+                    <label for="title">Title (book / journal / article):</label>
                     <input type="text" name="title" id="title" value="[% whole.value.other.title %]" />
                 </li>
                 <li>
-                    <label for="author">Author:</label>
+                    <label for="author">Author / editor:</label>
                     <input type="text" name="author" id="author" value="[% whole.value.other.author %]" />
                 </li>
                 <li>
