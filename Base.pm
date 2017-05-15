@@ -174,7 +174,7 @@ responses is carried out by the helper procedures `availability', `prices' and
 sub confirm {
     my ( $self, $params ) = @_;
     my $stage = $params->{other}->{stage};
-    if ( 'availability' eq $stage || !$stage ) {
+    if ( !$stage || 'availability' eq $stage ) {
         return $self->availability($params);
     } elsif ( 'pricing' eq $stage ) {
         return $self->prices($params);
@@ -199,7 +199,7 @@ sub create {
     my ( $self, $params ) = @_;
     my $other = $params->{other};
     my $stage = $other->{stage};
-    if ( 'init' eq $stage || !$stage ) {
+    if ( !$stage || 'init' eq $stage ) {
         # We just need to request the snippet that builds the Creation
         # interface.
         return {
@@ -323,7 +323,7 @@ Return an ILL standard response for the status method call.
 sub status {
     my ( $self, $params ) = @_;
     my $stage = $params->{other}->{stage};
-    if ( $stage eq 'init' || !$stage ) {
+    if ( !$stage || $stage eq 'init' ) {
         my $status = $self->_process($self->_api->order($params->{request}->orderid));
         $status->{method} = "status";
         $status->{stage} = "show_status";
@@ -485,7 +485,7 @@ sub _process {
 
     my $status = $re->status;
     my $message = $re->message;
-    my $response = $re;
+    $response = $re;
     my $code = "This unusual case has not yet been defined: $message ($status)";
     my $error = 0;
 
@@ -766,7 +766,7 @@ sub _search {
     $nav_qry .= "&branchcode=" . $branch;
     $nav_qry .= "&backend=" . $backend;
     my $userstring = "[keywords: " . $query . "]";
-    while ( my ($type, $value) = each $opts ) {
+    while ( my ($type, $value) = each %{$opts} ) {
         $userstring .= "[" . join(": ", $type, $value) . "]";
         $nav_qry .= "&" . join("=", $type, $value)
             unless ( 'start_rec' eq $type );
@@ -814,8 +814,8 @@ sub _parseResponse {
         if ( ref $config->{$field} eq 'ARRAY' ) {
             foreach my $node ($chunk->findnodes($field)) {
                 $accum->{$field} = [] if ( !$accum->{$field} );
-                push @{$accum}{$field},
-                  $self->_parseResponse($node, ${$config}{$field}[0], {});
+                push @{$accum->{$field}},
+                  $self->_parseResponse($node, ${$config->{$field}}[0], {});
             }
         } else {
             my ( $op, $arg ) = ( "findvalue", $field );
@@ -948,7 +948,7 @@ sub _deriveProperties {
     } );
     if ( $prefix ) {
         my $paccum = {};
-        while ( my ( $k, $v ) = each $accum ) {
+        while ( my ( $k, $v ) = each %{$accum} ) {
             $paccum->{$prefix . $k} = $v;
         }
         $accum = $paccum;
@@ -987,8 +987,8 @@ sub _recurse {
         $wip->{$xpath} =
             [ $self->_deriveProperties($template) ];
     } else {
-        while ( my ( $key, $value ) = each $template ) {
-            if ( $key ~~ $keywords ) {
+        while ( my ( $key, $value ) = each %{$template} ) {
+            if ( grep { $key eq $_ } @{$keywords} ) {
                 # syntactic keyword entry -> add keyword entry's value to the
                 # current prefix entry in our accumulated results.
                 if ( $key eq "inSummary" ) {
