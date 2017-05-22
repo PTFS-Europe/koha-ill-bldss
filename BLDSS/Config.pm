@@ -190,8 +190,10 @@ sub getApiSpec {
         inSummary: yes
       volume:
         name: Volume Number
+        inSummary: yes
       issue:
         name: Issue Number
+        inSummary: yes
       part:
         name: Part Number
       edition:
@@ -213,6 +215,7 @@ sub getApiSpec {
         inSummary: yes
       pages:
         name: Pages
+        inSummary: yes
 ";
 }
 
