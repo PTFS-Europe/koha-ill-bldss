@@ -102,12 +102,22 @@
 <form method="POST" action=[% here %]>
   <fieldset class="rows">
     <legend>Available borrowers for surname [% surname %]</legend>
+    <input name="stage" id="stage" value="validate" type="hidden"/>
+    <input name="method" id="method" value="create" type="hidden"/>
+    <input name="backend" id="backend" value="[% whole.value.other.backend %]" type="hidden"/>
+    <input name="branchcode" id="branchcode" value="[% whole.value.other.branchcode %]" type="hidden"/>
+    <input name="query" id="query" value="[% whole.value.other.query %]" type="hidden"/>
+    <input name="isbn" id="isbn" value="[% whole.value.other.isbn %]" type="hidden"/>
+    <input name="issn" id="issn" value="[% whole.value.other.issn %]" type="hidden"/>
+    <input name="title" id="title" value="[% whole.value.other.title %]" type="hidden"/>
+    <input name="author" id="author" value="[% whole.value.other.author %]" type="hidden"/>
+    <input name="type" id="type" value="[% whole.value.other.type %]" type="hidden"/>
     [% FOREACH opt IN whole.value %]
     [% IF opt.key == "brw" %]
     <ol>
       <li>
         <label class="required" for="borrowernumber">Borrower</label>
-        <select name="borrowernumber" id="borrowernumber">
+        <select name="cardnumber" id="cardnumber">
           <option value=""></option>
           [% FOREACH brw IN opt.value %]
           <option value="[% brw.cardnumber %]">
