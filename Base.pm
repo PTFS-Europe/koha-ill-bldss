@@ -28,6 +28,7 @@ use Koha::Illrequest::Config;
 use Koha::Illbackends::BLDSS::BLDSS::API;
 use Koha::Illbackends::BLDSS::BLDSS::Config;
 use Koha::Illbackends::BLDSS::BLDSS::XML;
+use Try::Tiny;
 use URI::Escape;
 use YAML;
 
@@ -266,11 +267,15 @@ sub create {
         $request->store;
         # ...Populate Illrequestattributes
         while ( my ( $type, $value ) = each %{$bldss_result} ) {
-            Koha::Illrequestattribute->new({
-                illrequest_id => $request->illrequest_id,
-                type          => $type,
-                value         => $value->{value},
-            })->store;
+            # Sometimes we attempt to store the same illrequestattribute
+            # twice.  We simply ignore when that happens.
+            try {
+                Koha::Illrequestattribute->new({
+                    illrequest_id => $request->illrequest_id,
+                    type          => $type,
+                    value         => $value->{value},
+                })->store;
+            };
         }
         return {
             status  => "",
