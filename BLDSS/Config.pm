@@ -23,6 +23,7 @@ be populated through parameters for the constructor.
 sub new {
     my ( $class, $config ) = @_;
 
+    $config = $config->{configuration}->{raw_config}; # Extract the raw settings
     my $self = {
         api_key              => $config->{api_key}              || "73-0013",
         api_key_auth         => $config->{api_key_auth}         || "API1394039",

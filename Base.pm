@@ -62,11 +62,6 @@ sub new {
         keywords => [ "name", "accessor", "inSummary", "many" ],
     };
     bless( $self, $class );
-    # Need to extract the information we need from $params->config
-    # then build our own config with that and store that in _config
-    # FIXME: Injecting branchcode for credentials here.  Not available
-    # from Illrequest.pm yet -> per branch creds not working.
-    # api_keys => $self->_config->getCredentials($params->{branchcode}),
     my $config = Koha::Illbackends::BLDSS::BLDSS::Config->new($params->{config});
     my $api = Koha::Illbackends::BLDSS::BLDSS::API->new($config);
     $self->_config($config);
