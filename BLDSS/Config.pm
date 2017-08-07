@@ -21,9 +21,9 @@ be populated through parameters for the constructor.
 =cut
 
 sub new {
-    my ( $class, $config ) = @_;
+    my ( $class, $configuration ) = @_;
 
-    $config = $config->{configuration}->{raw_config}; # Extract the raw settings
+    my $config = $configuration->{configuration}->{raw_config}; # Extract the raw settings
     my $self = {
         api_key              => $config->{api_key}              || "73-0013",
         api_key_auth         => $config->{api_key_auth}         || "API1394039",
@@ -31,6 +31,7 @@ sub new {
         api_application_auth => $config->{api_application_auth} || "m7eZz1CCu7",
         api_url              => $config->{api_url}              || "http://apitest.bldss.bl.uk",
         config               => $config,
+        configuration        => $configuration,
     };
 
     bless $self, $class;
@@ -99,7 +100,7 @@ Return the hash of digitalRecipient settings defined by our config.
 
 sub getDigitalRecipients {
     my ( $self, $type ) = @_;
-    return $self->{config}->getDigitalRecipients($type);
+    return $self->{configuration}->getDigitalRecipients($type);
 }
 
 
