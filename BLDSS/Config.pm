@@ -68,9 +68,20 @@ Return the LibraryPrivilege definitions defined by our config.
 
 sub getLibraryPrivileges {
     my ( $self ) = @_;
-    my $values= $self->{configuration}->{library_privileges}->{branch} || {};
+    my $values = {};
+    if ( !$self->{config}->{branch} ) {
+        # OK, no per branch config defined
+    } elsif ( ref $self->{config}->{branch} eq 'HASH' ) {
+        my $branch_spec = $self->{config}->{branch};
+        $values->{$branch_spec->{code}} = $branch_spec->{library_privilege};
+    } elsif ( ref $self->{config}->{branch} eq 'ARRAY' ) {
+        foreach my $branch_spec ( $self->{config}->{branch} ) {
+            $values->{$branch_spec->{code}} =
+                $branch_spec->{library_privilege};
+        }
+    }
     $values->{default} =
-        $self->{configuration}->{library_privileges}->{default};
+        $self->{config}->{library_privilege} || 0;
     return $values;
 }
 
