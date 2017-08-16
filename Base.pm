@@ -304,7 +304,6 @@ sub cancel {
         $response->{stage} = 'init';
         return $response;
     };
-    return $response
     return {
         method => 'cancel',
         stage  => 'commit',
