@@ -75,7 +75,7 @@ sub getLibraryPrivileges {
         my $branch_spec = $self->{config}->{branch};
         $values->{$branch_spec->{code}} = $branch_spec->{library_privilege};
     } elsif ( ref $self->{config}->{branch} eq 'ARRAY' ) {
-        foreach my $branch_spec ( $self->{config}->{branch} ) {
+        foreach my $branch_spec ( @{$self->{config}->{branch}} ) {
             $values->{$branch_spec->{code}} =
                 $branch_spec->{library_privilege};
         }
@@ -96,8 +96,39 @@ Return the hash of ILL default formats defined by our config.
 sub getDefaultFormats {
     my ( $self, $type ) = @_;
     die "Unexpected type." unless ( $type eq 'brw_cat' || $type eq 'branch' );
-    my $values = $self->{configuration}->{default_formats}->{$type};
-    $values->{default} = $self->{configuration}->{default_formats}->{default};
+    my $values = {};
+    if ( $type eq 'branch' ) {
+        # Per branch definitions
+        if ( !$self->{config}->{branch} ) {
+            # OK, no per branch config defined
+        } elsif ( ref $self->{config}->{branch} eq 'HASH' ) {
+            my $branch_spec = $self->{config}->{branch};
+            $values->{branch}->{$branch_spec->{code}} =
+                $branch_spec->{default_formats};
+        } elsif ( ref $self->{config}->{branch} eq 'ARRAY' ) {
+            foreach my $branch_spec ( @{$self->{config}->{branch}} ) {
+                $values->{branch}->{$branch_spec->{code}} =
+                    $branch_spec->{default_formats};
+            }
+        }
+    } elsif ( $type eq 'brw_cat' ) {
+        # Per borrower category definitions
+        if ( !$self->{config}->{borrower_category} ) {
+            # OK, no per branch config defined
+        } elsif ( ref $self->{config}->{borrower_category} eq 'HASH' ) {
+            my $brwcat_spec = $self->{config}->{borrower_category};
+            $values->{brw_cat}->{$brwcat_spec->{code}} =
+                $brwcat_spec->{default_formats};
+        } elsif ( ref $self->{config}->{branch} eq 'ARRAY' ) {
+            foreach my $brwcat_spec ( @{$self->{config}->{borrower_category}} ) {
+                $values->{brw_cat}->{$brwcat_spec->{code}} =
+                    $brwcat_spec->{default_formats};
+            }
+        }
+    }
+
+    $values->{default} = $self->{config}->{default_formats};
+
     return $values;
 }
 
