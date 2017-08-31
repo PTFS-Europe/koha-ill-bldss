@@ -121,6 +121,25 @@ sub name {
     return "BLDSS";
 }
 
+=head3 capabilities
+
+    $capability = $backend->capabilities($name);
+
+Return the sub implementing a capability selected by NAME, or 0 if that
+capability is not implemented.
+
+=cut
+
+sub capabilities {
+    my ( $self, $name ) = @_;
+    my ( $query ) = @_;
+    my $capabilities = {
+        # The unmediated operation is just invoking confirm for BLDSS.
+        unmediated_ill => sub { $self->unmediated_confirm(@_); }
+    };
+    return $capabilities->{$name};
+}
+
 =head3 metadata
 
 Return a hashref containing canonical values from the key/value
@@ -179,6 +198,27 @@ sub confirm {
     } else {
         die "Confirm Unexpected Stage";
     }
+}
+
+=head3 unmediated_confirm
+
+    my $response = $BLDSS->unmediated_confirm( $params );
+
+Return an ILL standard response for the confirm method call, in the case of
+an unmediated workflow.
+
+In the context of BLDSS this involves reading the default order preferences
+from the configuration file, or falling back on the standard ones, and using
+that to "create the order".
+
+=cut
+
+sub unmediated_confirm {
+    my ( $self, $params ) = @_;
+    # Directly invoke return create_order.
+    # It contains logic to load request details (speed, quality...) from
+    # the configuration file, using getDefaultFormat.
+    return $self->create_order($params);
 }
 
 =head3 create
@@ -906,7 +946,7 @@ sub getDefaultFormat {
     return $brw_formats->{$params->{brw_cat}}
         || $brn_formats->{$params->{branch}}
         || $brw_formats->{default}
-        || die "No suitable format found.  Unlikely to have happened.";
+        || die "No default format found.  Please define one in koha-conf.xml.";
 }
 
 sub getSpec {
