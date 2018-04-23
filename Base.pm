@@ -62,6 +62,7 @@ sub new {
     my ( $class, $params ) = @_;
     my $self = {
         keywords => [ "name", "accessor", "inSummary", "many" ],
+        framework => 'FA'
     };
     bless( $self, $class );
     my $config = Koha::Illbackends::BLDSS::BLDSS::Config->new($params->{config});
@@ -353,6 +354,13 @@ sub bldss2biblio {
 
     # Create the MARC::Record object and populate
     my $record = MARC::Record->new();
+    if ($isbn) {
+        my $marc_isbn = MARC::Field->new(
+            '020','','',
+                a => $isbn
+        );
+        $record->append_fields($marc_isbn);
+    }
     if ($author) {
         my $marc_author = MARC::Field->new(
             '100','1','',
@@ -367,20 +375,13 @@ sub bldss2biblio {
         );
         $record->append_fields($marc_title);
     }
-    if ($isbn) {
-        my $marc_isbn = MARC::Field->new(
-            '020','','',
-                a => $isbn
-        );
-        $record->append_fields($marc_isbn);
-    }
 
 	# Suppress the record
 	$self->_set_suppression($record);
 
     # We hardcode a framework name of 'ILL', which will need to exist
     # All this stuff should be configurable
-    my $biblionumber = AddBiblio( $record, 'FA');
+    my $biblionumber = AddBiblio( $record, $self->{framework});
 
     return $biblionumber;
 }
