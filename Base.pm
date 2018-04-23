@@ -1,6 +1,6 @@
 package Koha::Illbackends::BLDSS::Base;
 
-# Copyright PTFS Europe 2014
+# Copyright PTFS Europe 2014, 2018
 #
 # This file is part of Koha.
 #
@@ -24,6 +24,8 @@ use Koha::Libraries;
 use Clone qw( clone );
 use Locale::Country;
 use XML::LibXML;
+use MARC::Record;
+use C4::Biblio qw( AddBiblio );
 use Koha::Illrequest::Config;
 use Koha::Illbackends::BLDSS::BLDSS::API;
 use Koha::Illbackends::BLDSS::BLDSS::Config;
@@ -292,6 +294,10 @@ sub create {
         my $request = $params->{request};
         my $patron = Koha::Patrons->find($other->{borrowernumber});
         my $bldss_result = $self->_find($other->{uin});
+
+        my $biblionumber = $self->bldss2biblio($bldss_result);
+
+        $request->biblio_id($biblionumber) unless !$biblionumber;
         $request->borrowernumber($patron->borrowernumber);
         $request->branchcode($other->{branchcode});
         $request->medium($other->{type});
@@ -324,6 +330,79 @@ sub create {
     } else {
         die "Create Unexpected Stage";
     }
+}
+
+=head3 bldss2biblio
+
+    my $biblionumber = $BLDSS->bldss2biblio($result);
+
+Create a basic biblio record for the passed BLDSS API result
+
+=cut
+
+sub bldss2biblio {
+    my ( $self, $result ) = @_;
+
+	# We only want to create biblios for books
+	return 0 unless $result->{ './type' }->{value} eq 'book';
+
+    # We're going to try and populate author, title & ISBN
+    my $author = $result->{ './metadata/titleLevel/author' }->{value};
+    my $title = $result->{ './metadata/titleLevel/title' }->{value};
+    my $isbn = $result->{ './metadata/titleLevel/isbn' }->{value};
+
+    # Create the MARC::Record object and populate
+    my $record = MARC::Record->new();
+    if ($author) {
+        my $marc_author = MARC::Field->new(
+            '100','1','',
+                a => $author
+        );
+        $record->append_fields($marc_author);
+    }
+    if ($title) {
+        my $marc_title = MARC::Field->new(
+            '245','0','0',
+                a => $title
+        );
+        $record->append_fields($marc_title);
+    }
+    if ($isbn) {
+        my $marc_isbn = MARC::Field->new(
+            '020','','',
+                a => $isbn
+        );
+        $record->append_fields($marc_isbn);
+    }
+
+	# Suppress the record
+	$self->_set_suppression($record);
+
+    # We hardcode a framework name of 'ILL', which will need to exist
+    # All this stuff should be configurable
+    my $biblionumber = AddBiblio( $record, 'FA');
+
+    return $biblionumber;
+}
+
+=head3 _set_suppression
+
+    $BLDSS->_set_suppression($record);
+
+Take a MARC::Record object and set it to be suppressed
+
+=cut
+
+sub _set_suppression {
+    my ( $self, $record ) = @_;
+
+	my $new942 = MARC::Field->new(
+		'942', '', '',
+			n => '1'
+	);
+	$record->append_fields($new942);
+
+    return 1;
 }
 
 =head3 cancel
@@ -1055,6 +1134,7 @@ sub _recurse {
 =head1 AUTHOR
 
 Alex Sassmannshausen <alex.sassmannshausen@ptfs-europe.com>
+Andrew Isherwood <andrew.isherwood@ptfs-europe.com>
 
 =cut
 
