@@ -343,8 +343,8 @@ Create a basic biblio record for the passed BLDSS API result
 sub bldss2biblio {
     my ( $self, $result ) = @_;
 
-	# We only want to create biblios for books
-	return 0 unless $result->{ './type' }->{value} eq 'book';
+    # We only want to create biblios for books
+    return 0 unless $result->{ './type' }->{value} eq 'book';
 
     # We're going to try and populate author, title & ISBN
     my $author = $result->{ './metadata/titleLevel/author' }->{value};
