@@ -42,11 +42,16 @@ use XML::LibXML;
 use Digest::HMAC_SHA1;
 use MIME::Base64;
 
+use Koha::Logger;
+
 sub new {
     my ( $class, $config ) = @_;
     my $self  = {
         ua          => LWP::UserAgent->new,
         config      => $config,
+        logger      => Koha::Logger->get(
+            { category => 'Koha.Illbackends.BLDSS.BLDSS.API' }
+        )
     };
 
     bless $self, $class;
@@ -447,15 +452,60 @@ sub _request {
         $req->header('Content-Type' => 'text/xml');
     }
 
+    # Log this request
+    $self->_log_request($req);
+
     my $res = $self->{ua}->request($req);
     if ( $res->is_success ) {
+        # Log the response
+        $self->_log_response($res);
         return $res->content;
     }
+    # Log the error
+    $self->_log_error($res);
     $self->{error} = {
         status  => $res->status_line,
         content => $res->content
     };
     return;
+}
+
+sub _log_request {
+    my ( $self, $req) = @_;
+
+    # Log details of the request
+    my %to_log = (
+        'HEADERS' => $req->headers_as_string,
+        'METHOD' => $req->method,
+        'URL' => $req->uri->as_string,
+        'CONTENT' => $req->content
+    );
+
+    my $log_me = "API REQUEST::\n";
+    # Clean up what we're logging
+    for (keys %to_log) {
+        $to_log{$_}=~s/^\s+|\s+$//g;
+        $log_me.="$_: $to_log{$_}\n";
+    }
+
+    $self->{logger}->info( $log_me );
+
+}
+
+sub _log_response {
+    my ( $self, $res) = @_;
+
+    my $log_me = "API RESPONSE::\n".$res->decoded_content;
+    $self->{logger}->info( $log_me );
+}
+
+sub _log_error {
+    my ( $self, $res) = @_;
+
+    my $log_me = "API ERROR\n";
+    $log_me.="STATUS: ".$res->status_line."\n";
+    $log_me.="CONTENT ".$res->content."\n";
+    $self->{logger}->warn( $log_me );
 }
 
 sub _authentication_header {
