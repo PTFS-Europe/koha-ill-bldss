@@ -829,74 +829,109 @@ sub _find {
     return $response;
 }
 
-=head3 search
+=head3 _search
 
-    my $results = $bldss->search($query, $opts);
+    my $results = $bldss->search($params);
 
-Return an array of Record objects.
+Given a hashref of search parameters, return an array of matching record
+objects.
 
-The optional OPTS parameter specifies additional options to be passed to the
-API. For now the options we use in the ILL Module are:
- max_results -> SearchRequest.maxResults,
- start_rec   -> SearchRequest.start,
- isbn        -> SearchRequest.Advanced.isbn
- issn        -> SearchRequest.Advanced.issn
- title       -> SearchRequest.Advanced.title
- author      -> SearchRequest.Advanced.author
- type        -> SearchRequest.Advanced.type
- general     -> SearchRequest.Advanced.general
+The accepted hash keys are:
 
-We simply pass the options hashref straight to the backend.
+=over 2
+
+=item start_rec
+
+The index of the first record to return from the result set. Defaults to 1
+
+=item max_results
+
+The maximum number of results to return (limited to a maximum of 100). Defaults
+to 10
+
+=item issn
+
+A query to be applied to the ISSN index. Use this to search by ISSN.
+
+=item isbn
+
+A query to be applied to the ISBN index. Use this to search by ISBN.
+
+=item title
+
+A query to be applied to the Title index. Use this to specify a query should
+be the title of a record.
+
+=item author
+
+A query to be applied to the Author index. Use this to specify a query should
+be the author/creator of a record.
+
+=item type
+
+A query to be applied to the record Type index. Use this to specify the record
+type to return (valid types are those returned as the type value e.g. journal,
+book and article).
+
+=item general
+
+A query to be applied to the General index. Use this to specify data such as
+shelfmark or volume/issue/part information.
+
+=back
 
 =cut
 
 sub _search {
     my ( $self, $params ) = @_;
-    my $other = $params->{other};
-    my $query = $other->{query};
+    my $other          = $params->{other};
+    my $query          = $other->{query};
     my $borrowernumber = $other->{borrowernumber};
-    my $brw = Koha::Patrons->find($borrowernumber);
-    my $branch = $other->{branchcode};
-    my $backend = $other->{backend};
-    my %opts = map { $_ => $other->{$_} }
-        qw/ author isbn issn title type max_results start_rec /;
+    my $brw            = Koha::Patrons->find($borrowernumber);
+    my $branch         = $other->{branchcode};
+    my $backend        = $other->{backend};
+    my %opts           = map { $_ => $other->{$_} }
+      qw/ author isbn issn title type max_results start_rec /;
     my $opts = \%opts;
 
     $opts->{max_results} = 10 unless $opts->{max_results};
-    $opts->{start_rec} = 1 unless $opts->{start_rec};
+    $opts->{start_rec}   = 1  unless $opts->{start_rec};
 
     # Perform the search in the API
-    my $response = $self->_process($self->_api->search($query, $opts));
+    my $response = $self->_process( $self->_api->search( $query, $opts ) );
 
     # Augment Response with standard values
-    $response->{method} = "create";
-    $response->{stage} = "search";
+    $response->{method}         = "create";
+    $response->{stage}          = "search";
     $response->{borrowernumber} = $borrowernumber;
-    $response->{cardnumber} = $brw->cardnumber;
-    $response->{branchcode} = $branch;
-    $response->{backend} = $backend;
-    $response->{query} = $query;
-    $response->{params} = $params;
+    $response->{cardnumber}     = $brw->cardnumber;
+    $response->{branchcode}     = $branch;
+    $response->{backend}        = $backend;
+    $response->{query}          = $query;
+    $response->{params}         = $params;
 
     # Build user search string & paging query string
-    my $nav_qry = "?method=create&stage=search_cont&query="
-        . uri_escape($query);
+    my $nav_qry =
+      "?method=create&stage=search_cont&query=" . uri_escape($query);
     $nav_qry .= "&borrowernumber=" . $borrowernumber;
     $nav_qry .= "&branchcode=" . $branch;
     $nav_qry .= "&backend=" . $backend;
     my $userstring = "[keywords: " . $query . "]";
-    while ( my ($type, $value) = each %{$opts} ) {
-        $userstring .= "[" . join(": ", $type, $value) . "]";
-        $nav_qry .= "&" . join("=", $type, $value)
-            unless ( 'start_rec' eq $type );
+    while ( my ( $type, $value ) = each %{$opts} ) {
+        $userstring .= "[" . join( ": ", $type, $value ) . "]";
+        $nav_qry    .= "&" . join( "=",  $type, $value )
+          unless ( 'start_rec' eq $type );
     }
     $response->{userstring} = $userstring;
 
     # Handle errors
     if ( $response->{error} && $response->{status} eq 'search_fail' ) {
+
         # Ignore 'search_fail' result: empty resultset
-        $response->{error} = 0
-    } elsif ( $response->{error} ) {
+        $response->{error} = 0;
+    }
+    elsif ( $response->{error} ) {
+
         # Return on other error
         return $response;
     }
@@ -904,22 +939,24 @@ sub _search {
     # Else populate response values.
     my @return;
     my $spec = $self->getSpec;
-    foreach my $datum ( @{$response->{value}->result->records} ) {
-	my $record = $self->_parseResponse($datum, $spec, {});
-        push (@return, $record);
+    foreach my $datum ( @{ $response->{value}->result->records } ) {
+        my $record = $self->_parseResponse( $datum, $spec, {} );
+        push( @return, $record );
     }
     $response->{value} = \@return;
 
     # Finalise paging query string
     my $result_count = @return;
     my $current_pos  = $opts->{start_rec};
-    my $next_pos = $current_pos + $result_count;
-    my $next = $nav_qry . "&start_rec=" . $next_pos
-        if ( $result_count == $opts->{max_results} );
+    my $next_pos     = $current_pos + $result_count;
+    my $next =
+      ( $result_count == $opts->{max_results} )
+      ? $nav_qry . "&start_rec=" . $next_pos
+      : undef;
     my $prev_pos = $current_pos - $result_count;
-    my $previous = $nav_qry . "&start_rec=" . $prev_pos
-        if ( $prev_pos >= 1 );
-    $response->{next} = $next;
+    my $previous =
+      ( $prev_pos >= 1 ) ? $nav_qry . "&start_rec=" . $prev_pos : undef;
+    $response->{next}     = $next;
     $response->{previous} = $previous;
 
     # Return search results
