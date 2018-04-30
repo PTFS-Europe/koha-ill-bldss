@@ -1060,8 +1060,8 @@ sub getDefaultFormat {
     my $brn_formats = $self->_config->getDefaultFormats('branch');
     my $brw_formats = $self->_config->getDefaultFormats('brw_cat');
 
-    return $brw_formats->{$params->{brw_cat}}
-        || $brn_formats->{$params->{branch}}
+    return $brw_formats->{brw_cat}->{$params->{brw_cat}}
+        || $brn_formats->{branch}->{$params->{branch}}
         || $brw_formats->{default}
         || die "No default format found.  Please define one in koha-conf.xml.";
 }
