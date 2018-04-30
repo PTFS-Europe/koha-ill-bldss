@@ -12,7 +12,8 @@
 [% ELSIF whole.status == 'missing_query' %]
 <p><em>Please Note:</em> You did not enter a search query.</p>
 [% ELSE %]
-<p>Unhandled error</p>
+<p><em>Unhandled error</em></p>
+<p>[% IF whole.message %][% whole.message %][% END %]</p>
 [% END %]
 [% END %]
 

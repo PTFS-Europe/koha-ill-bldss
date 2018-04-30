@@ -466,16 +466,14 @@ sub status {
 sub validate_delivery_input {
     my ( $self, $params ) = @_;
     my ( $fmt, $brw, $brn, $recipient ) = (
-        $params->{service}->{format}, $params->{borrower}, $params->{branch},
+        $params->{service}->{format},
+        $params->{borrower},
+        $params->{branch},
         $params->{digital_recipient},
     );
-    # FIXME: Here we can cross-reference services with API's services request.
-    # The latter currently returns 404, so instead we mock a services
-    # response.
-    # my $formats = $self->_api_do( {
-    #     action => 'reference',
-    #     params => [ 'formats' ],
-    # } );
+    # The /formats API route gives no indication of whether a given format
+    # is electronic or physical, so the best we can do is maintain a 
+    # mapping table here
     my $formats = {
         1 => "digital",
         2 => "digital",
@@ -485,9 +483,11 @@ sub validate_delivery_input {
         6 => "physical",
     };
     # Seed return values.
-    # FIXME: instead of dying we should return Status, for friendly UI output
-    # (0 only in case of all valid).
-    my ( $status, $delivery ) = ( 0, {} );
+    my $stat_obj = {
+        error => 0,
+        message => ""
+    };
+    my ( $status, $delivery ) = ( $stat_obj, {} );
 
     if ( 'digital' eq $formats->{$fmt} ) {
         my $target = $brw->email || "";
@@ -498,9 +498,13 @@ sub validate_delivery_input {
                 $target = $brn->branchemail;
             }
         }
-        die "Digital delivery: invalid $recipient type email address."
-            if ( !$target );
-        $delivery->{email} = $target;
+        if (!$target) {
+            $status->error = 1;
+            $status->message = "Digital delivery: invalid $recipient " .
+                "type email address.";
+        } else {
+            $delivery->{email} = $target;
+        }
     } elsif ( 'physical' eq $formats->{$fmt} ) {
         # Country
         $delivery->{Address}->{Country} = country2code(
@@ -512,22 +516,32 @@ sub validate_delivery_input {
             TownOrCity    => "branchcity",
             PostOrZipCode => "branchzip",
         };
+        my @missing_fields = ();
         while ( my ( $bl_field, $k_field ) = each %{$mandatory_fields} ) {
-            die "Physical delivery requested, but branch missing $k_field."
-                if ( !$brn->$k_field );
-            $delivery->{Address}->{$bl_field} = $brn->$k_field;
+            if ( !$brn->$k_field ) {
+                push @missing_fields, $k_field;
+            } else {
+                $delivery->{Address}->{$bl_field} = $brn->$k_field;
+            }
         }
-        # Optional Fields
-        my $optional_fields = {
-            AddressLine2     => "branchaddress2",
-            AddressLine3     => "branchaddress3",
-            CountyOrState    => "branchstate",
-        };
-        while ( my ( $bl_field, $k_field ) = each %{$optional_fields} ) {
-            $delivery->{Address}->{$bl_field} = $brn->$k_field || "";
+        if (@missing_fields) {
+            $status->error = 1;
+            $status->message = "Physical delivery requested, " .
+                "but branch missing " . join(", ", @missing_fields);
+        } else {
+            # Optional Fields
+            my $optional_fields = {
+                AddressLine2     => "branchaddress2",
+                AddressLine3     => "branchaddress3",
+                CountyOrState    => "branchstate",
+            };
+            while ( my ( $bl_field, $k_field ) = each %{$optional_fields} ) {
+                $delivery->{Address}->{$bl_field} = $brn->$k_field || "";
+            }
         }
     } else {
-        die "Unknown service type: $fmt."
+        $status->error = 1;
+        $status->message = "Unknown service type: $fmt.";
     }
 
     return ( $status, $delivery );
@@ -729,7 +743,7 @@ sub create_order {
             branch  => $branch->branchcode,
         } );
     }
-    my ( $invalid, $delivery ) = $self->validate_delivery_input( {
+    my ( $status, $delivery ) = $self->validate_delivery_input( {
         service           => $details,
         borrower          => $brw,
         branch            => $branch,
@@ -738,7 +752,13 @@ sub create_order {
             branch  => $branch,
         }),
     } );
-    return $invalid if ( $invalid );
+    if ($status->{error}) {
+        return {
+            error => 1,
+            method => 'create',
+            message => $status->{message}
+        };
+    }
 
     my $metadata = $self->metadata($params->{request});
     my $final_details = {
@@ -764,7 +784,11 @@ sub create_order {
 
     my $response = $self->_process($self->_api->create_order($final_details));
     if ( $response->{error} ) {
-        die $response->{message};
+        return {
+            error => 1,
+            method => 'create',
+            message => $response->{message}
+        };
     }
 
     $request->orderid($response->{value}->result->newOrder->orderline);
