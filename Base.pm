@@ -752,11 +752,25 @@ sub create_order {
             branch  => $branch,
         }),
     } );
+
     if ($status->{error}) {
         return {
             error => 1,
             method => 'create',
             message => $status->{message}
+        };
+    }
+
+    my $is_available = $self->validate_available({
+        request => $request,
+        details => $details
+    });
+
+    if (!$is_available) {
+        return {
+            error => 1,
+            method => 'create',
+            message => "Selected item is not available in the specified format"
         };
     }
 
@@ -802,6 +816,43 @@ sub create_order {
         cost   => $request->cost,
     };
     return $final_out;
+}
+
+sub validate_available {
+    my ( $self, $params ) = @_;
+
+    my ($speed_avail, $quality_avail) = 0;
+
+    my $metadata = $self->metadata($params->{request});
+    my $response = $self->_process($self->_api->availability(
+        $metadata->{UIN},
+        { year => $metadata->{Year} }
+    ));
+
+    return 0 if ( $response->{error} );
+
+    my $availability = $response->{value}->result->availability;
+
+    foreach my $format (@{$availability->formats}) {
+        foreach my $speed (@{$format->speeds}) {
+            if (
+                $speed_avail == 0 &&
+                $speed->key eq $params->{details}->{speed}
+            ) {
+                $speed_avail = 1;
+            }
+        }
+        foreach my $quality (@{$format->qualities}) {
+            if (
+                $quality_avail == 0 &&
+                $quality->key eq $params->{details}->{quality}
+            ) {
+                $quality_avail = 1;
+            }
+        }
+    }
+
+    return $speed_avail && $quality_avail;
 }
 
 sub prices {
