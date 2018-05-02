@@ -525,8 +525,8 @@ sub validate_delivery_input {
             }
         }
         if ( !$target ) {
-            $status->error = 1;
-            $status->message =
+            $status->{error} = 1;
+            $status->{message} =
               "Digital delivery: invalid $recipient " . "type email address.";
         }
         else {
@@ -556,8 +556,8 @@ sub validate_delivery_input {
             }
         }
         if (@missing_fields) {
-            $status->error = 1;
-            $status->message =
+            $status->{error} = 1;
+            $status->{message} =
                 "Physical delivery requested, "
               . "but branch missing "
               . join( ", ", @missing_fields );
@@ -575,8 +575,8 @@ sub validate_delivery_input {
         }
     }
     else {
-        $status->error   = 1;
-        $status->message = "Unknown service type: $fmt.";
+        $status->{error}   = 1;
+        $status->{message} = "Unknown service type: $fmt.";
     }
 
     return ( $status, $delivery );
