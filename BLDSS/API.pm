@@ -495,7 +495,20 @@ sub _log_request {
 sub _log_response {
     my ( $self, $res) = @_;
 
-    my $log_me = "API RESPONSE::\n".$res->decoded_content;
+    # Log details of the response
+    my %to_log = (
+        'HEADERS' => $res->headers_as_string,
+        'CONTENT' => $res->decoded_content
+    );
+
+    my $log_me = "API RESPONSE::\n";
+
+    # Clean up what we're logging
+    for (keys %to_log) {
+        $to_log{$_}=~s/^\s+|\s+$//g;
+        $log_me.="$_: $to_log{$_}\n";
+    }
+
     $self->{logger}->info( $log_me );
 }
 
