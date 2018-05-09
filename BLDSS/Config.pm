@@ -21,41 +21,42 @@ be populated through parameters for the constructor.
 =cut
 
 sub new {
-    my ( $class, $configuration ) = @_;
+  my ($class, $configuration) = @_;
 
-    my $config = $configuration->{configuration}->{raw_config}; # Extract the raw settings
-    my $self = {
-        api_key              => $config->{api_key}              || "73-0013",
-        api_key_auth         => $config->{api_key_auth}         || "API1394039",
-        api_application      => $config->{api_application}      || "BLAPI8IJdN",
-        api_application_auth => $config->{api_application_auth} || "m7eZz1CCu7",
-        api_url              => $config->{api_url}              || "http://apitest.bldss.bl.uk",
-        config               => $config,
-        configuration        => $configuration,
-    };
+  my $config
+    = $configuration->{configuration}->{raw_config};  # Extract the raw settings
+  my $self = {
+    api_key              => $config->{api_key}              || "73-0013",
+    api_key_auth         => $config->{api_key_auth}         || "API1394039",
+    api_application      => $config->{api_application}      || "BLAPI8IJdN",
+    api_application_auth => $config->{api_application_auth} || "m7eZz1CCu7",
+    api_url       => $config->{api_url} || "http://apitest.bldss.bl.uk",
+    config        => $config,
+    configuration => $configuration,
+  };
 
-    bless $self, $class;
-    return $self;
+  bless $self, $class;
+  return $self;
 }
 
 sub api_key {
-    my $self = shift;
-    return $self->{api_key};
+  my $self = shift;
+  return $self->{api_key};
 }
 
 sub api_application {
-    my $self = shift;
-    return $self->{api_application};
+  my $self = shift;
+  return $self->{api_application};
 }
 
 sub api_url {
-    my $self = shift;
-    return $self->{api_url};
+  my $self = shift;
+  return $self->{api_url};
 }
 
 sub hashing_key {
-    my $self = shift;
-    return join("&", $self->{api_application_auth}, $self->{api_key_auth});
+  my $self = shift;
+  return join("&", $self->{api_application_auth}, $self->{api_key_auth});
 }
 
 =head3 getLibraryPrivileges
@@ -67,22 +68,23 @@ Return the LibraryPrivilege definitions defined by our config.
 =cut
 
 sub getLibraryPrivileges {
-    my ( $self ) = @_;
-    my $values = {};
-    if ( !$self->{config}->{branch} ) {
-        # OK, no per branch config defined
-    } elsif ( ref $self->{config}->{branch} eq 'HASH' ) {
-        my $branch_spec = $self->{config}->{branch};
-        $values->{$branch_spec->{code}} = $branch_spec->{library_privilege};
-    } elsif ( ref $self->{config}->{branch} eq 'ARRAY' ) {
-        foreach my $branch_spec ( @{$self->{config}->{branch}} ) {
-            $values->{$branch_spec->{code}} =
-                $branch_spec->{library_privilege};
-        }
+  my ($self) = @_;
+  my $values = {};
+  if (!$self->{config}->{branch}) {
+
+    # OK, no per branch config defined
+  }
+  elsif (ref $self->{config}->{branch} eq 'HASH') {
+    my $branch_spec = $self->{config}->{branch};
+    $values->{$branch_spec->{code}} = $branch_spec->{library_privilege};
+  }
+  elsif (ref $self->{config}->{branch} eq 'ARRAY') {
+    foreach my $branch_spec (@{$self->{config}->{branch}}) {
+      $values->{$branch_spec->{code}} = $branch_spec->{library_privilege};
     }
-    $values->{default} =
-        $self->{config}->{library_privilege} || 0;
-    return $values;
+  }
+  $values->{default} = $self->{config}->{library_privilege} || 0;
+  return $values;
 }
 
 =head3 getDefaultFormats
@@ -94,42 +96,51 @@ Return the hash of ILL default formats defined by our config.
 =cut
 
 sub getDefaultFormats {
-    my ( $self, $type ) = @_;
-    die "Unexpected type." unless ( $type eq 'brw_cat' || $type eq 'branch' );
-    my $values = {};
-    if ( $type eq 'branch' ) {
-        # Per branch definitions
-        if ( !$self->{config}->{branch} ) {
-            # OK, no per branch config defined
-        } elsif ( ref $self->{config}->{branch} eq 'HASH' ) {
-            my $branch_spec = $self->{config}->{branch};
-            $values->{branch}->{$branch_spec->{code}} =
-                $branch_spec->{default_formats};
-        } elsif ( ref $self->{config}->{branch} eq 'ARRAY' ) {
-            foreach my $branch_spec ( @{$self->{config}->{branch}} ) {
-                $values->{branch}->{$branch_spec->{code}} =
-                    $branch_spec->{default_formats};
-            }
-        }
-    } elsif ( $type eq 'brw_cat' ) {
-        # Per borrower category definitions
-        if ( !$self->{config}->{borrower_category} ) {
-            # OK, no per branch config defined
-        } elsif ( ref $self->{config}->{borrower_category} eq 'HASH' ) {
-            my $brwcat_spec = $self->{config}->{borrower_category};
-            $values->{brw_cat}->{$brwcat_spec->{code}} =
-                $brwcat_spec->{default_formats};
-        } elsif ( ref $self->{config}->{branch} eq 'ARRAY' ) {
-            foreach my $brwcat_spec ( @{$self->{config}->{borrower_category}} ) {
-                $values->{brw_cat}->{$brwcat_spec->{code}} =
-                    $brwcat_spec->{default_formats};
-            }
-        }
+  my ($self, $type) = @_;
+  die "Unexpected type." unless ($type eq 'brw_cat' || $type eq 'branch');
+  my $values = {};
+  if ($type eq 'branch') {
+
+    # Per branch definitions
+    if (!$self->{config}->{branch}) {
+
+      # OK, no per branch config defined
     }
+    elsif (ref $self->{config}->{branch} eq 'HASH') {
+      my $branch_spec = $self->{config}->{branch};
+      $values->{branch}->{$branch_spec->{code}}
+        = $branch_spec->{default_formats};
+    }
+    elsif (ref $self->{config}->{branch} eq 'ARRAY') {
+      foreach my $branch_spec (@{$self->{config}->{branch}}) {
+        $values->{branch}->{$branch_spec->{code}}
+          = $branch_spec->{default_formats};
+      }
+    }
+  }
+  elsif ($type eq 'brw_cat') {
 
-    $values->{default} = $self->{config}->{default_formats};
+    # Per borrower category definitions
+    if (!$self->{config}->{borrower_category}) {
 
-    return $values;
+      # OK, no per branch config defined
+    }
+    elsif (ref $self->{config}->{borrower_category} eq 'HASH') {
+      my $brwcat_spec = $self->{config}->{borrower_category};
+      $values->{brw_cat}->{$brwcat_spec->{code}}
+        = $brwcat_spec->{default_formats};
+    }
+    elsif (ref $self->{config}->{branch} eq 'ARRAY') {
+      foreach my $brwcat_spec (@{$self->{config}->{borrower_category}}) {
+        $values->{brw_cat}->{$brwcat_spec->{code}}
+          = $brwcat_spec->{default_formats};
+      }
+    }
+  }
+
+  $values->{default} = $self->{config}->{default_formats};
+
+  return $values;
 }
 
 =head3 getDigitalRecipients
@@ -141,8 +152,8 @@ Return the hash of digitalRecipient settings defined by our config.
 =cut
 
 sub getDigitalRecipients {
-    my ( $self, $type ) = @_;
-    return $self->{configuration}->getDigitalRecipients($type);
+  my ($self, $type) = @_;
+  return $self->{configuration}->getDigitalRecipients($type);
 }
 
 
@@ -157,23 +168,24 @@ simply populate application details, and populate key details with 0.
 =cut
 
 sub getCredentials {
-    my ( $self, $branchCode ) = @_;
-    my $creds = $self->{configuration}->{credentials}
-        || die "We have no credentials defined.  Please check koha-conf.xml.";
+  my ($self, $branchCode) = @_;
+  my $creds = $self->{configuration}->{credentials}
+    || die "We have no credentials defined.  Please check koha-conf.xml.";
 
-    my $exact = { api_key => 0, api_auth => 0 };
-    if ( $branchCode && $creds->{api_keys}->{$branchCode} ) {
-        $exact = $creds->{api_keys}->{$branchCode}
-    } elsif ( $creds->{api_keys}->{default} ) {
-        $exact = $creds->{api_keys}->{default};
-    }
+  my $exact = {api_key => 0, api_auth => 0};
+  if ($branchCode && $creds->{api_keys}->{$branchCode}) {
+    $exact = $creds->{api_keys}->{$branchCode};
+  }
+  elsif ($creds->{api_keys}->{default}) {
+    $exact = $creds->{api_keys}->{default};
+  }
 
-    return {
-        api_key              => $exact->{api_key},
-        api_key_auth         => $exact->{api_auth},
-        api_application      => $creds->{api_application}->{key},
-        api_application_auth => $creds->{api_application}->{auth},
-    };
+  return {
+    api_key              => $exact->{api_key},
+    api_key_auth         => $exact->{api_auth},
+    api_application      => $creds->{api_application}->{key},
+    api_application_auth => $creds->{api_application}->{auth},
+  };
 }
 
 =head3 getApiSpec
@@ -185,8 +197,8 @@ Return a YAML description of the record structure used by BLDSS API.
 =cut
 
 sub getApiSpec {
-    my ( $self ) = @_;
-    return "record:
+  my ($self) = @_;
+  return "record:
   uin:
     name: British Library Identifier
     inSummary: yes
