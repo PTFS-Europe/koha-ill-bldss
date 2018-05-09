@@ -140,16 +140,16 @@
   </fieldset>
 </form>
 
-[% ELSIF whole.stage == 'search' OR whole.stage == 'search_cont' %]
+[% ELSIF whole.stage == 'search_results' %]
 <h2>Search results</h2>
 [% IF whole.value.0 %]
 <p role="alert" class="bg-info alert alert-success">
   <span id="search-summary" class="pull-left">
-    Results of search for: ”[% whole.userstring %]“
+    [% whole.records %] Results of search for: ”[% whole.userstring %]“
     [% url = back _ "?method=create&amp;stage=init" %]
     [% url = url _ "&amp;backend=" _ whole.backend %]
     [% url = url _ "&amp;cardnumber=" _ whole.cardnumber %]
-    [% url = url _ "&amp;brw=" _ whole.brw %]
+    [% url = url _ "&amp;brw=" _ whole.borrowernumber %]
     [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
     [% url = url _ "&amp;query=" _ whole.params.other.query %]
     [% url = url _ "&amp;issn=" _ whole.params.other.issn %]
@@ -181,12 +181,17 @@
       <td>
         [% IF field.key == './uin' %]
         [% url = here _ "?method=create&amp;stage=commit" %]
-        [% url = url _ "&amp;type=" _ whole.params.other.type %]
+        [% url = url _ "&amp;backend=" _ whole.backend %]
         [% url = url _ "&amp;borrowernumber=" _ whole.borrowernumber %]
         [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
-        [% url = url _ "&amp;backend=" _ whole.backend %]
+        [% url = url _ "&amp;query=" _ whole.params.other.query %]
+        [% url = url _ "&amp;issn=" _ whole.params.other.issn %]
+        [% url = url _ "&amp;isbn=" _ whole.params.other.isbn %]
+        [% url = url _ "&amp;title=" _ whole.params.other.title %]
+        [% url = url _ "&amp;author=" _ whole.params.other.author %]
+        [% url = url _ "&amp;type=" _ whole.params.other.type %]
         [% url = url _ "&amp;uin=" _ value %]
-        <a href=[% url %]>
+        <a href="[% url %]">
           Request [% value %]
         </a>
         [% ELSE %]

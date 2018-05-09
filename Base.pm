@@ -118,6 +118,15 @@ sub status_graph {
             next_actions   => [],
             ui_method_icon => 'fa-search',
         },
+        MIG => {
+            prev_actions   => [ 'NEW', 'REQREV', 'QUEUED', ],
+            id             => 'MIG',
+            name           => 'Backend Migration',
+            ui_method_name => 'Switch provider',
+            method         => 'migrate',
+            next_actions   => [],
+            ui_method_icon => 'fa-search',
+        },
     };
 }
 
@@ -256,68 +265,104 @@ sub create {
     my ( $self, $params ) = @_;
     my $other = $params->{other};
     my $stage = $other->{stage};
-    if ( !$stage || 'init' eq $stage ) {
 
-        # We just need to request the snippet that builds the Creation
-        # interface.
-        return {
-            status  => "",
-            message => "",
-            error   => 0,
-            value   => $params,
-            method  => "create",
-            stage   => "init",
-        };
-    }
-    elsif ( 'validate' eq $stage ) {
+    my $response = {
+        backend    => $self->name,
+        method     => 'create',
+        stage      => $stage,
+        branchcode => $other->{branchcode},
+        cardnumber => $other->{cardnumber},
+        status     => '',
+        message    => '',
+        error      => 0
+    };
+
+    # Check for borrowernumber
+    if ( !$other->{borrowernumber} && defined( $other->{cardnumber} ) ) {
+        $response->{cardnumber} = $other->{cardnumber};
 
         # 'cardnumber' here could also be a surname (or in the case of
-        # search_cont it will be a borrowernumber).
+        # search it will be a borrowernumber).
         my ( $brw_count, $brw ) =
           _validate_borrower( $other->{'cardnumber'}, $stage );
-        my $result = {
-            status  => "",
-            message => "",
-            error   => 1,
-            value   => {},
-            method  => "create",
-            stage   => "init",
-        };
-        if ( _fail( $other->{'branchcode'} ) ) {
-            $result->{status} = "missing_branch";
-            $result->{value}  = $params;
-            return $result;
-        }
-        elsif ( !Koha::Libraries->find( $other->{'branchcode'} ) ) {
-            $result->{status} = "invalid_branch";
-            $result->{value}  = $params;
-            return $result;
-        }
-        elsif ( $brw_count == 0 ) {
-            $result->{status} = "invalid_borrower";
-            $result->{value}  = $params;
-            return $result;
+        if ( $brw_count == 0 ) {
+            $response->{status} = "invalid_borrower";
+            $response->{value}  = $params;
+            $response->{error}  = 1;
+            return $response;
         }
         elsif ( $brw_count > 1 ) {
 
             # We must select a specific borrower out of our options.
-            $params->{brw}   = $brw;
-            $result->{value} = $params;
-            $result->{stage} = "borrowers";
-            $result->{error} = 0;
-            return $result;
+            $params->{brw}     = $brw;
+            $response->{value} = $params;
+            $response->{stage} = "borrowers";
+            $response->{error} = 0;
+            return $response;
         }
         else {
-            # We perform the search!
             $other->{borrowernumber} = $brw->borrowernumber;
-            return $self->_search($params);
+
+            #$params->{other}->{borrowernumber} = $brw->borrowernumber;
         }
     }
-    elsif ( 'search_cont' eq $stage ) {
+    $response->{borrowernumber} = $other->{borrowernumber};
+
+    # Initiate process
+    if ( !$stage || 'init' eq $stage ) {
+
+        # We just need to request the snippet that builds the Creation
+        # interface.
+        $response->{stage} = 'init';
+        $response->{value} = $params;
+        return $response;
+    }
+
+    # Validate form and perform search if valid
+    elsif ( 'validate' eq $stage ) {
+
+        if ( _fail( $other->{'branchcode'} ) ) {
+            $response->{status} = "missing_branch";
+            $response->{error}  = 1;
+            $response->{stage}  = 'init';
+            $response->{value}  = $params;
+            return $response;
+        }
+        elsif ( !Koha::Libraries->find( $other->{'branchcode'} ) ) {
+            $response->{status} = "invalid_branch";
+            $response->{error}  = 1;
+            $response->{stage}  = 'init';
+            $response->{value}  = $params;
+            return $response;
+        }
+        else {
+            $response->{stage}  = 'search_results';
+            $response->{query}  = $other->{query};
+            $response->{params} = $params;
+
+            # Perform the search!
+            my $results = $self->_search($params);
+
+            # Merge and return
+            $response = { %{$response}, %{$results} };
+            return $response;
+        }
+    }
+
+    # Load next results page
+    elsif ( 'search_results' eq $stage ) {
+        $response->{stage}  = 'search_results';
+        $response->{query}  = $other->{query};
+        $response->{params} = $params;
 
         # Continue search!
-        return $self->_search($params);
+        my $results = $self->_search($params);
+
+        # Merge and return
+        return { %{$response}, %{$results} };
     }
+
+    # Create request from search result
     elsif ( 'commit' eq $stage ) {
 
         # We should have the data we need for an API derived Record.
@@ -333,13 +378,39 @@ sub create {
         $request->branchcode( $other->{branchcode} );
         $request->medium( $other->{type} );
         $request->status('NEW');
-        $request->backend( $other->{backend} );
+        $request->backend( $self->name );
         $request->placed( DateTime->now );
         $request->updated( DateTime->now );
         $request->store;
 
+        my $request_details = {};
+
+        # ...Add original query details to result for storage
+        my @interesting = (qw/issn isbn title author/);
+        for my $interesting (@interesting) {
+            $request_details->{$interesting}->{value} = $other->{$interesting}
+              if $other->{$interesting};
+        }
+        $request_details->{'srchany'}->{value} = $other->{query}
+          if defined( $other->{query} );
+        my $author =
+          $bldss_result->{'./metadata/itemOfInterestLevel/author'}->{value}
+          // $bldss_result->{'./metadata/titleLevel/author'}->{value};
+        my $title =
+          $bldss_result->{'./metadata/itemOfInterestLevel/title'}->{value}
+          // $bldss_result->{'./metadata/titleLevel/title'}->{value};
+        my $issn = $bldss_result->{'./metadata/titleLevel/issn'}->{value};
+        my $type = $bldss_result->{'./type'}->{value};
+        $request_details->{author}->{value} = $author if $author;
+        $request_details->{title}->{value}  = $title  if $title;
+        $request_details->{issn}->{value}   = $issn   if $issn;
+        $request_details->{type}->{value}   = $type   if $type;
+
+        # ...Merge query and result details
+        $request_details = { %{$request_details}, %{$bldss_result} };
+
         # ...Populate Illrequestattributes
-        while ( my ( $type, $value ) = each %{$bldss_result} ) {
+        while ( my ( $type, $value ) = each %{$request_details} ) {
 
             # Sometimes we attempt to store the same illrequestattribute
             # twice.  We simply ignore when that happens.
@@ -363,8 +434,180 @@ sub create {
             next    => "illview",
         };
     }
+
+    # Catch unexpected stage
     else {
         die "Create Unexpected Stage";
+    }
+}
+
+=head3 migrate
+
+Migrate a request into or out of this backend.
+
+=cut
+
+sub migrate {
+    my ( $self, $params ) = @_;
+    my $other = $params->{other};
+
+    my $stage = $other->{stage};
+    my $step  = $other->{step};
+
+    # Recieve a new request from another backend and suppliment it with
+    # anything we require speficifcally for this backend.
+    if ( !$stage || $stage eq 'immigrate' ) {
+
+        my $response = {
+            backend       => $self->name,
+            method        => 'migrate',
+            stage         => $stage,
+            illrequest_id => $other->{illrequest_id},
+            status        => '',
+            message       => '',
+            error         => 0
+        };
+        $response->{branchcode} = $other->{branchcode} if $other->{branchcode};
+        $response->{borrowernumber} = $other->{borrowernumber}
+          if $other->{borrowernumber};
+
+        # Initiate immigration search
+        if ( !$step || 'init' eq $step ) {
+
+            # Fetch original request details
+            my $original_request =
+              Koha::Illrequests->find( $other->{illrequest_id} );
+
+            # Collect parameters
+            $response->{step}           = 'search_results';
+            $response->{query}          = $other->{query};
+            $response->{params}         = $params;
+            $response->{borrowernumber} = $original_request->borrowernumber;
+            $response->{branchcode}     = $original_request->branchcode;
+
+            # Initiate search with details from last request
+            my @recognised_attributes = (qw/isbn issn title author srchany/);
+            my $original_attributes =
+              $original_request->illrequestattributes->search(
+                { type => { '-in' => \@recognised_attributes } } );
+            my $search_attributes =
+              { map { $_->type => $_->value }
+                  ( $original_attributes->as_list ) };
+            $params->{other} = { %{ $params->{other} }, %{$search_attributes} };
+            if (
+                my $query = $original_request->illrequestattributes->find(
+                    { type => 'srchany' }
+                )
+              )
+            {
+                $params->{other}->{query} = $query->value;
+            }
+
+            # Perform a search
+            my $results = $self->_search($params);
+
+            # Merge and return
+            $response = { %{$response}, %{$results} };
+            return $response;
+        }
+
+        # Load next results page
+        elsif ( 'search_results' eq $step ) {
+            $response->{step}   = 'search_results';
+            $response->{query}  = $other->{query};
+            $response->{params} = $params;
+
+            # Continue search!
+            my $results = $self->_search($params);
+
+            # Merge and return
+            return { %{$response}, %{$results} };
+        }
+
+        # Create request from search results
+        elsif ( 'commit' eq $step ) {
+            my $request = $params->{request};
+
+            my $bldss_result = $self->_find( $other->{uin} );
+            my $biblionumber = $self->bldss2biblio($bldss_result);
+
+            $request->borrowernumber( $other->{borrowernumber} );
+            $request->branchcode( $other->{branchcode} );
+            $request->status('NEW');
+            $request->backend( $self->name );
+            $request->placed( DateTime->now );
+            $request->updated( DateTime->now );
+            $request->biblio_id($biblionumber);
+            $request->store;
+
+            my $request_details = {};
+
+            # ...Add original query details to result for storage
+            my @interesting = (qw/issn isbn title author/);
+            for my $interesting (@interesting) {
+                $request_details->{$interesting} = $other->{$interesting}
+                  if defined( $other->{$interesting} );
+            }
+            $request_details->{'srchany'} = $other->{query}
+              if defined( $other->{query} );
+
+            # ...Merge query and result details
+            $request_details = { %{$request_details}, %{$bldss_result} };
+
+            # ...Populate Illrequestattributes
+            $request_details->{migrated_from} = $other->{illrequest_id};
+            while ( my ( $type, $value ) = each %{$request_details} ) {
+                Koha::Illrequestattribute->new(
+                    {
+                        illrequest_id => $request->illrequest_id,
+                        type          => $type,
+                        value         => $value,
+                    }
+                )->store;
+            }
+
+            return {
+                error   => 0,
+                status  => '',
+                message => '',
+                method  => 'migrate',
+                stage   => 'commit',
+                next    => 'emigrate',
+                value   => $params,
+            };
+        }
+
+        # Catch unexpected step
+        else {
+            die "Immigate Unexpected Step";
+        }
+    }
+
+    # Cleanup any outstanding work and close the request.
+    elsif ( $stage eq 'emigrate' ) {
+        my $request = $params->{request};
+
+        # Cancel the original request if required
+        if ( $request->status eq 'REQ' ) {
+
+            # FIXME: Add Error Handling Here
+            $self->_process(
+                $self->_api->cancel_order( $params->{request}->orderid ) );
+        }
+
+        # Update original request to cancelled
+        $request->status("REQREV");
+        $request->orderid(undef);
+        $request->store;
+
+        return {
+            error   => 0,
+            status  => '',
+            message => '',
+            method  => 'migrate',
+            stage   => 'commit',
+            value   => $params,
+        };
     }
 }
 
@@ -449,8 +692,11 @@ sub bldss2biblio {
     # Create the MARC::Record object and populate
     my $record = MARC::Record->new();
     if ($isbn) {
-        my $marc_isbn = MARC::Field->new( '020', '', '', a => $isbn );
-        $record->append_fields($marc_isbn);
+        my @isbns = split /|/, $isbn;
+        for my $each (@isbns) {
+            my $marc_isbn = MARC::Field->new( '020', '', '', a => $each );
+            $record->append_fields($marc_isbn);
+        }
     }
     if ($author) {
         my $marc_author = MARC::Field->new( '100', '1', '', a => $author );
@@ -606,7 +852,7 @@ sub _validate_borrower {
     my $patrons = Koha::Patrons->new;
     my ( $count, $brw );
     my $query = { cardnumber => $input };
-    $query = { borrowernumber => $input } if ( $action eq 'search_cont' );
+    $query = { borrowernumber => $input } if ( $action eq 'search_results' );
 
     my $brws = $patrons->search($query);
     $count = $brws->count;
@@ -1023,47 +1269,19 @@ shelfmark or volume/issue/part information.
 
 sub _search {
     my ( $self, $params ) = @_;
-    my $other          = $params->{other};
-    my $query          = $other->{query};
-    my $borrowernumber = $other->{borrowernumber};
-    my $brw            = Koha::Patrons->find($borrowernumber);
-    my $branch         = $other->{branchcode};
-    my $backend        = $other->{backend};
-    my %opts           = map { $_ => $other->{$_} }
-      qw/ author isbn issn title type max_results start_rec /;
-    my $opts = \%opts;
+    my $other = $params->{other};
 
+    # Collect parameters
+    my $opts = { map { $_ => $other->{$_} }
+          qw/ author isbn issn title type max_results start_rec / };
     $opts->{max_results} = 10 unless $opts->{max_results};
     $opts->{start_rec}   = 1  unless $opts->{start_rec};
 
-    # Perform the search in the API
-    my $response = $self->_process( $self->_api->search( $query, $opts ) );
+    # Perform search
+    my $response =
+      $self->_process( $self->_api->search( $other->{query}, $opts ) );
 
-    # Augment Response with standard values
-    $response->{method}         = "create";
-    $response->{stage}          = "search";
-    $response->{borrowernumber} = $borrowernumber;
-    $response->{cardnumber}     = $brw->cardnumber;
-    $response->{branchcode}     = $branch;
-    $response->{backend}        = $backend;
-    $response->{query}          = $query;
-    $response->{params}         = $params;
-
-    # Build user search string & paging query string
-    my $nav_qry =
-      "?method=create&stage=search_cont&query=" . uri_escape($query);
-    $nav_qry .= "&borrowernumber=" . $borrowernumber;
-    $nav_qry .= "&branchcode=" . $branch;
-    $nav_qry .= "&backend=" . $backend;
-    my $userstring = "[keywords: " . $query . "]";
-    while ( my ( $type, $value ) = each %{$opts} ) {
-        $userstring .= "[" . join( ": ", $type, $value ) . "]";
-        $nav_qry    .= "&" . join( "=",  $type, $value )
-          unless ( 'start_rec' eq $type );
-    }
-    $response->{userstring} = $userstring;
-
-    # Handle errors
+    # Catch errors
     if ( $response->{error} && $response->{status} eq 'search_fail' ) {
 
         # Ignore 'search_fail' result: empty resultset
@@ -1071,20 +1289,41 @@ sub _search {
     }
     elsif ( $response->{error} ) {
 
-        # Return on other error
+        # Return on other errors
         return $response;
     }
 
-    # Else populate response values.
+    # Construct response
     my @return;
     my $spec = $self->getSpec;
+    $response->{records} = $response->{value}->result->numberOfRecords;
     foreach my $datum ( @{ $response->{value}->result->records } ) {
         my $record = $self->_parseResponse( $datum, $spec, {} );
         push( @return, $record );
     }
     $response->{value} = \@return;
 
-    # Finalise paging query string
+    # Build user search string & paging query string
+    my $nav_qry =
+        "?backend="
+      . $self->name
+      . "&method=$other->{method}"
+      . "&stage=$other->{stage}"
+      . "&borrowernumber=$other->{borrowernumber}"
+      . "&cardnumber=$other->{cardnumber}"
+      . "&branchcode=$other->{branchcode}";
+
+    $nav_qry .= "&step=$other->{step}" if $other->{step};
+    $nav_qry .= "&query=" . uri_escape( $other->{query} );
+
+    my $userstring = "[keywords: " . $other->{query} . "]";
+    while ( my ( $type, $value ) = each %{$opts} ) {
+        $userstring .= "[" . join( ": ", $type, $value ) . "]";
+        $nav_qry    .= "&" . join( "=",  $type, $value )
+          unless ( 'start_rec' eq $type );
+    }
+    $response->{userstring} = $userstring;
+
     my $result_count = @return;
     my $current_pos  = $opts->{start_rec};
     my $next_pos     = $current_pos + $result_count;

@@ -42,6 +42,7 @@ sub rebless {
         quality         => 1,
         result          => 1,
         record          => 1,
+        numberOfRecords => 1,
         service         => 1,
         speed           => 1,
 
@@ -172,7 +173,7 @@ package Koha::Illbackends::BLDSS::BLDSS::XML::Result;
 use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
-    return qw(currency region copyrightVat loanRenewalCost);
+    return qw(currency region copyrightVat loanRenewalCost numberOfRecords);
 }
 
 sub new {
