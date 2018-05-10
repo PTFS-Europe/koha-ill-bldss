@@ -353,12 +353,52 @@ sub create {
 
   # Create request from search result
   elsif ('commit' eq $stage) {
+    use Data::Dumper;
+    warn "Entering commit\n";
+    warn Dumper($other);
 
     # We should have the data we need for an API derived Record.
     # ...Populate Illrequest
     my $request      = $params->{request};
     my $patron       = Koha::Patrons->find($other->{borrowernumber});
     my $bldss_result = $self->_find($other->{uin});
+
+    # If this is a 'book' or 'journal' request ask the user if they wish to add
+    # further details to turn it into a chapter or issue request.
+    if ($bldss_result->{'./type'}->{value} =~ /book|journal/) {
+
+      # Augment bldss_result with submitted details
+      if ($other->{complete}) {
+        $bldss_result->{'./metadata/itemOfInterestLevel/title'}
+          = {value => $other->{chapter_title}}
+          if defined($other->{chapter_title});
+        $bldss_result->{'./metadata/itemOfInterestLevel/author'}
+          = {value => $other->{chapter_author}}
+          if defined($other->{chapter_author});
+        $bldss_result->{'./metadata/itemOfInterestLevel/pages'}
+          = {value => $other->{pages}}
+          if defined($other->{pages});
+      }
+
+      # Request more details
+      else {
+        $response->{stage}  = 'extra_details';
+        $response->{params} = $other;
+        $response->{value}  = {
+          title  => $bldss_result->{'./metadata/titleLevel/title'}->{value},
+          author => $bldss_result->{'./metadata/titleLevel/author'}->{value},
+          publisher =>
+            $bldss_result->{'./metadata/titleLevel/publisher'}->{value},
+          isbn    => $bldss_result->{'./metadata/titleLevel/isbn'}->{value},
+          issn    => $bldss_result->{'./metadata/titleLevel/issn'}->{value},
+          edition => $bldss_result->{'./metadata/itemLevel/edition'}->{value},
+          year    => $bldss_result->{'./metadata/itemLevelLevel/year'}->{value}
+        };
+        warn "Response: \n";
+        warn Dumper($response);
+        return $response;
+      }
+    }
 
     my $biblionumber = $self->bldss2biblio($bldss_result);
 
@@ -750,7 +790,7 @@ sub _store_search {
   # book
   if ($result->{'./type'}->{value} eq 'book') {
     $search_attributes->{type} = 'book';
-    my $isbns = $$result->{'./metadata/titleLevel/isbn'}->{value};
+    my $isbns = $result->{'./metadata/titleLevel/isbn'}->{value};
     if ($isbns) {
       $search_attributes->{isbn} = $isbns;
       $search_attributes->{isbn} =~ s/|/,/g;

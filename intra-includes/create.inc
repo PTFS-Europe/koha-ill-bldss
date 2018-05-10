@@ -239,4 +239,77 @@
 </p>
 [% END %]
 
+[% ELSIF whole.stage == 'extra_details' %]
+<h2>Refine request</h2>
+<form method="POST" action=[% here %]>
+  <fieldset class="rows">
+    <legend>Book Details</legend>
+    <input name="backend" id="backend" value="[% whole.backend %]" type="hidden"/>
+    <input name="method" id="method" value="create" type="hidden"/>
+    <input name="stage" id="stage" value="commit" type="hidden"/>
+    <input name="complete" id="complete" value="1" type="hidden"/>
+    <input name="branchcode" id="branchcode" value="[% whole.branchcode %]" type="hidden"/>
+    <input name="borrowernumber" id="borrowernumber" value="[% whole.borrowernumber %]" type="hidden"/>
+    <input name="cardnumber" id="cardnumber" value="[% whole.cardnumber %]" type="hidden"/>
+    <input name="query" id="query" value="[% whole.params.query %]" type="hidden"/>
+    <input name="isbn" id="isbn" value="[% whole.params.isbn %]" type="hidden"/>
+    <input name="issn" id="issn" value="[% whole.params.issn %]" type="hidden"/>
+    <input name="title" id="title" value="[% whole.params.title %]" type="hidden"/>
+    <input name="author" id="author" value="[% whole.params.author %]" type="hidden"/>
+    <input name="type" id="type" value="[% whole.params.type %]" type="hidden"/>
+    <input name="uin" id="uin" value="[% whole.params.uin %]" type="hidden"/>
+    <ol>
+      <li>
+        <label for="rtitle">Title:</label>
+        <input type="text" name="rtitle" id="rtitle" value="[% whole.value.title %]" readonly/>
+      </li>
+      <li>
+        <label for="rauthor">Author:</label>
+        <input type="text" name="rauthor" id="rauthor" value="[% whole.value.author %]" readonly/>
+      </li>
+      <li>
+        <label for="rpublisher">Publisher:</label>
+        <input type="text" name="rpublisher" id="rpublisher" value="[% whole.value.publisher %]" readonly/>
+      </li>
+      <li>
+        <label for="risbn">ISBN:</label>
+        <input type="text" name="risbn" id="risbn" value="[% whole.value.isbn %]" readonly/>
+      </li>
+      <li>
+        <label for="rissn">ISSN:</label>
+        <input type="text" name="rissn" id="rissn" value="[% whole.value.issn %]" readonly/>
+      </li>
+      <li>
+        <label for="redition">Edition:</label>
+        <input type="text" name="redition" id="redition" value="[% whole.value.edition %]" readonly/>
+      </li>
+      <li>
+        <label for="ryear">Year:</label>
+        <input type="text" name="ryear" id="ryear" value="[% whole.value.year %]" readonly/>
+      </li>
+    </ol>
+  </fieldset>
+  <fieldset class="rows">
+    <legend>Optional Chapter Details</legend>
+    <ol>
+      <li>
+        <label for="chapter_title">Chapter title:</label>
+        <input type="text" name="chapter_title" id="chapter_title" type="text" value=""/>
+      </li>
+      <li>
+        <label for="chapter_author">Chapter author:</label>
+        <input type="text" name="chapter_author" id="chapter_author" type="text" value=""/>
+      </li>
+      <li>
+        <label for="pages">Pages:</label>
+        <input type="text" name="pages" id="pages" type="text" value=""/>
+      </li>
+    </ol>
+  </fieldset>
+  <fieldset class="action">
+    <input type="submit" value="Request"/>
+    <a class="cancel" href=[% parent %]>Cancel</a>
+  </fieldset>
+</form>
+
 [% END %]
