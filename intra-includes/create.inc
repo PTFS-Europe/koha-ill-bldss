@@ -239,4 +239,63 @@
 </p>
 [% END %]
 
+[% ELSIF whole.stage == 'extra_details' %]
+<h2>Refine request</h2>
+<form method="POST" action=[% here %]>
+  <fieldset class="rows">
+    <legend>Book Details</legend>
+    <ol>
+      <li>
+        <label for="title">Title:</label>
+        <input type="text" name="title" id="title" value="[% whole.value.title %]" readonly/>
+      </li>
+      <li>
+        <label for="author">Author:</label>
+        <input type="text" name="author" id="author" value="[% whole.value.author %]" readonly/>
+      </li>
+      <li>
+        <label for="publisher">Publisher:</label>
+        <input type="text" name="publisher" id="publisher" value="[% whole.value.publisher %]" readonly/>
+      </li>
+      <li>
+        <label for="isbn">ISBN:</label>
+        <input type="text" name="isbn" id="isbn" value="[% whole.value.isbn %]" readonly/>
+      </li>
+      <li>
+        <label for="issn">ISSN:</label>
+        <input type="text" name="issn" id="issn" value="[% whole.value.issn %]" readonly/>
+      </li>
+      <li>
+        <label for="edition">Edition:</label>
+        <input type="text" name="edition" id="edition" value="[% whole.value.edition %]" readonly/>
+      </li>
+      <li>
+        <label for="year">Year:</label>
+        <input type="text" name="year" id="year" value="[% whole.value.year %]" readonly/>
+      </li>
+    </ol>
+  </fieldset>
+  <fieldset class="rows">
+    <legend>Optional Chapter Details</legend>
+    <ol>
+      <li>
+        <label for="chapter_title">Chapter title:</label>
+        <input type="text" name="chapter_title" id="chapter_title" type="text" value=""/>
+      </li>
+      <li>
+        <label for="chapter_author">Chapter author:</label>
+        <input type="text" name="chapter_author" id="chapter_author" type="text" value=""/>
+      </li>
+      <li>
+        <label for="pages">Pages:</label>
+        <input type="text" name="pages" id="pages" type="text" value=""/>
+      </li>
+    </ol>
+  </fieldset>
+  <fieldset class="action">
+    <input type="submit" value="Request"/>
+    <a class="cancel" href=[% parent %]>Cancel</a>
+  </fieldset>
+</form>
+
 [% END %]
