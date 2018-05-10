@@ -372,33 +372,11 @@ sub create {
     $request->updated(DateTime->now);
     $request->store;
 
-    my $request_details = {};
-
     # ...Add original query details to result for storage
-    my @interesting = (qw/issn isbn title author/);
-    for my $interesting (@interesting) {
-      $request_details->{$interesting}->{value} = $other->{$interesting}
-        if $other->{$interesting};
-    }
-    $request_details->{'srchany'}->{value} = $other->{query}
-      if defined($other->{query});
-    my $author
-      = $bldss_result->{'./metadata/itemOfInterestLevel/author'}->{value}
-      // $bldss_result->{'./metadata/titleLevel/author'}->{value};
-    my $title = $bldss_result->{'./metadata/itemOfInterestLevel/title'}->{value}
-      // $bldss_result->{'./metadata/titleLevel/title'}->{value};
-    my $issn = $bldss_result->{'./metadata/titleLevel/issn'}->{value};
-    my $type = $bldss_result->{'./type'}->{value};
-    $request_details->{author}->{value} = $author if $author;
-    $request_details->{title}->{value}  = $title  if $title;
-    $request_details->{issn}->{value}   = $issn   if $issn;
-    $request_details->{type}->{value}   = $type   if $type;
-
-    # ...Merge query and result details
-    $request_details = {%{$request_details}, %{$bldss_result}};
+    $self->_store_search($request, $bldss_result, $other);
 
     # ...Populate Illrequestattributes
-    while (my ($type, $value) = each %{$request_details}) {
+    while (my ($type, $value) = each %{$bldss_result}) {
 
       # Sometimes we attempt to store the same illrequestattribute
       # twice.  We simply ignore when that happens.
@@ -410,6 +388,8 @@ sub create {
         })->store;
       };
     }
+
+    # Return
     return {
       status  => "",
       message => "",
@@ -509,8 +489,50 @@ sub migrate {
       my $request = $params->{request};
 
       my $bldss_result = $self->_find($other->{uin});
+
+      # Merge original request details as required
+      my $original_request = Koha::Illrequests->find($other->{illrequest_id});
+      my @interesting_fields
+        = (qw/title container_title author edition year pages/);
+      my $original_attributes = {
+        map { $_->type => $_->value } (
+          $original_request->illrequestattributes->search(
+            {type => {'-in' => \@interesting_fields}}
+          )->as_list
+        )
+      };
+      if (exists $original_attributes->{'container_title'}) {
+
+        # itemLevel
+        $bldss_result->{'./metadata/itemLevel/year'}
+          //= $original_request->{year}
+          if exists $original_request->{year};
+        $bldss_result->{'./metadata/itemLevel/volume'}
+          //= $original_request->{volume}
+          if exists $original_request->{volume};
+        $bldss_result->{'./metadata/itemLevel/issue'}
+          //= $original_request->{issue}
+          if exists $original_request->{issue};
+        $bldss_result->{'./metadata/itemLevel/edition'}
+          //= $original_request->{edition}
+          if exists $original_request->{edition};
+
+        # itemOfInterestLevel
+        $bldss_result->{'./metadata/itemOfInterestLevel/title'}
+          //= $original_attributes->{title}
+          if exists $original_attributes->{title};
+        $bldss_result->{'./metadata/itemOfInterestLevel/author'}
+          //= $original_attributes->{author}
+          if exists $original_attributes->{author};
+        $bldss_result->{'./metadata/itemOfInterestLevel/pages'}
+          //= $original_attributes->{pages}
+          if exists $original_attributes->{pages};
+      }
+
+      # Add temporary bib record
       my $biblionumber = $self->bldss2biblio($bldss_result);
 
+      # Store request
       $request->borrowernumber($other->{borrowernumber});
       $request->branchcode($other->{branchcode});
       $request->status('NEW');
@@ -520,27 +542,16 @@ sub migrate {
       $request->biblio_id($biblionumber);
       $request->store;
 
-      my $request_details = {};
-
       # ...Add original query details to result for storage
-      my @interesting = (qw/issn isbn title author/);
-      for my $interesting (@interesting) {
-        $request_details->{$interesting} = $other->{$interesting}
-          if defined($other->{$interesting});
-      }
-      $request_details->{'srchany'} = $other->{query}
-        if defined($other->{query});
-
-      # ...Merge query and result details
-      $request_details = {%{$request_details}, %{$bldss_result}};
+      $self->_store_search($request, $bldss_result, $other);
 
       # ...Populate Illrequestattributes
-      $request_details->{migrated_from} = $other->{illrequest_id};
-      while (my ($type, $value) = each %{$request_details}) {
+      $bldss_result->{migrated_from}->{value} = $other->{illrequest_id};
+      while (my ($type, $value) = each %{$bldss_result}) {
         Koha::Illrequestattribute->new({
           illrequest_id => $request->illrequest_id,
           type          => $type,
-          value         => $value,
+          value         => $value->{value},
         })->store;
       }
 
@@ -702,6 +713,159 @@ sub _set_suppression {
 
   my $new942 = MARC::Field->new('942', '', '', n => '1');
   $record->append_fields($new942);
+
+  return 1;
+}
+
+=head3 _store_search
+
+  $self->_store_search($request, $result, $params);
+
+Given the request object, result and params hashrefs, collate and store the 
+share search attributes for possible migrations.
+
+=cut
+
+sub _store_search {
+  my ($self, $request, $result, $params) = @_;
+
+  # Standard Fields
+  # * type [book, journal, article]
+  # * ISBN
+  # * ISSN
+  # * title
+  # * author
+  # * editor
+  # * publisher
+  # * year
+  # * edition
+  # * issue
+  # * volume
+
+  # * pages
+  # * container_title
+
+  my $search_attributes = {};
+
+  # book
+  if ($result->{'./type'}->{value} eq 'book') {
+    $search_attributes->{type} = 'book';
+    my $isbns = $$result->{'./metadata/titleLevel/isbn'}->{value};
+    if ($isbns) {
+      $search_attributes->{isbn} = $isbns;
+      $search_attributes->{isbn} =~ s/|/,/g;
+    }
+    $search_attributes->{title}
+      = $result->{'./metadata/titleLevel/title'}->{value};
+    $search_attributes->{author}
+      = $result->{'./metadata/titleLevel/author'}->{value};
+    $search_attributes->{publisher}
+      = $result->{'./metadata/titleLevel/publisher'}->{value};
+    $search_attributes->{year}
+      = $result->{'./metadata/itemLevel/year'}->{value};
+    $search_attributes->{edition}
+      = $result->{'./metadata/itemLevel/edition'}->{value};
+    $search_attributes->{volume}
+      = $result->{'./metadata/itemLevel/volume'}->{value};
+  }
+
+  # journal
+  elsif ($result->{'./type'}->{value} eq 'journal') {
+    $search_attributes->{type} = 'journal';
+    $search_attributes->{issn}
+      = $result->{'./metadata/titleLevel/issn'}->{value};
+    $search_attributes->{title}
+      = $result->{'./metadata/titleLevel/title'}->{value};
+    $search_attributes->{author}
+      = $result->{'./metadata/titleLevel/author'}->{value};
+    $search_attributes->{publisher}
+      = $result->{'./metadata/titleLevel/publisher'}->{value};
+  }
+
+  # article
+  elsif ($result->{'./type'}->{value} eq 'article') {
+    $search_attributes->{type} = 'article';
+    $search_attributes->{issn}
+      = $result->{'./metadata/titleLevel/issn'}->{value};
+    $search_attributes->{title}
+      = $result->{'./metadata/itemOfInterestLevel/title'}->{value};
+    $search_attributes->{author}
+      = $result->{'./metadata/itemOfInterestLevel/author'}->{value};
+    $search_attributes->{publisher}
+      = $result->{'./metadata/titleLevel/publisher'}->{value};
+    $search_attributes->{year}
+      = $result->{'./metadata/itemLevel/year'}->{value};
+    $search_attributes->{issue}
+      = $result->{'./metadata/itemLevel/issue'}->{value};
+    $search_attributes->{pages}
+      = $result->{'./metadata/itemOfInterestLevel/pages'}->{value};
+    $search_attributes->{container_title}
+      = $result->{'./metadata/titleLevel/title'}->{value};
+  }
+
+  # newspaper
+  elsif ($result->{'./type'}->{value} eq 'newspaper') {
+    $search_attributes->{type} = 'newspaper';
+    $search_attributes->{issn}
+      = $result->{'./metadata/titleLevel/issn'}->{value};
+    $search_attributes->{title}
+      = $result->{'./metadata/titleLevel/title'}->{value};
+    $search_attributes->{author}
+      = $result->{'./metadata/titleLevel/author'}->{value};
+    $search_attributes->{publisher}
+      = $result->{'./metadata/titleLevel/publisher'}->{value};
+  }
+
+  # conference
+  elsif ($result->{'./type'}->{value} eq 'conference') {
+    $search_attributes->{type} = 'conference';
+    $search_attributes->{title}
+      = $result->{'./metadata/titleLevel/title'}->{value};
+  }
+
+  # thesis
+  elsif ($result->{'./type'}->{value} eq 'thesis') {
+    $search_attributes->{type} = 'thesis';
+    $search_attributes->{title}
+      = $result->{'./metadata/titleLevel/thesisDissertation'}->{value};
+  }
+
+  # score
+  elsif ($result->{'./type'}->{value} eq 'score') {
+    $search_attributes->{type} = 'score';
+    $search_attributes->{ismn}
+      = $result->{'./metadata/titleLevel/ismn'}->{value};
+    $search_attributes->{title}
+      = $result->{'./metadata/titleLevel/title'}->{value};
+    $search_attributes->{author}
+      = $result->{'./metadata/titleLevel/author'}->{value};
+    $search_attributes->{publisher}
+      = $result->{'./metadata/titleLevel/publisher'}->{value};
+  }
+
+  # ...Fallback to original query details for any undefined fields
+  my @interesting = (qw/issn isbn title author/);
+  for my $interesting (@interesting) {
+    $search_attributes->{$interesting} //= $params->{$interesting}
+      if $params->{$interesting};
+  }
+  $search_attributes->{'srchany'} = $params->{query}
+    if defined($params->{query});
+
+  while (my ($type, $value) = each %{$search_attributes}) {
+
+    # Sometimes we attempt to store the same illrequestattribute
+    # twice.  We simply ignore when that happens.
+    if (defined($value)) {
+      try {
+        Koha::Illrequestattribute->new({
+          illrequest_id => $request->illrequest_id,
+          type          => $type,
+          value         => $value,
+        })->store;
+      };
+    }
+  }
 
   return 1;
 }
