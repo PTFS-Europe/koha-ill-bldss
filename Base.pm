@@ -365,16 +365,47 @@ sub create {
 
     # If this is a 'book' or 'journal' request ask the user if they wish to add
     # further details to turn it into a chapter or issue request.
-    if ($bldss_result->{'./type'}->{value} =~ /book|journal/) {
+    if ($bldss_result->{'./type'}->{value} =~ /book|journal|newspaper/) {
 
       # Augment bldss_result with submitted details
       if ($other->{complete}) {
+
+        # itemLevel
+        $bldss_result->{'./metadata/itemLevel/year'}
+          //= {value => $other->{item_year}}
+          if defined($other->{item_year});
+        $bldss_result->{'./metadata/itemLevel/volume'}
+          = {value => $other->{item_volume}}
+          if defined($other->{item_volume});
+        $bldss_result->{'./metadata/itemLevel/issue'}
+          = {value => $other->{item_issue}}
+          if defined($other->{item_issue});
+        $bldss_result->{'./metadata/itemLevel/part'}
+          = {value => $other->{item_part}}
+          if defined($other->{item_part});
+        $bldss_result->{'./metadata/itemLevel/edition'}
+          //= {value => $other->{item_edition}}
+          if defined($other->{item_edition});
+        $bldss_result->{'./metadata/itemLevel/season'}
+          = {value => $other->{item_season}}
+          if defined($other->{item_season});
+        $bldss_result->{'./metadata/itemLevel/month'}
+          = {value => $other->{item_month}}
+          if defined($other->{item_month});
+        $bldss_result->{'./metadata/itemLevel/day'}
+          = {value => $other->{item_day}}
+          if defined($other->{item_day});
+        $bldss_result->{'./metadata/itemLevel/specialIssue'}
+          = {value => $other->{item_special_issue}}
+          if defined($other->{item_special_issue});
+
+        # itemOfInterestLevel
         $bldss_result->{'./metadata/itemOfInterestLevel/title'}
-          = {value => $other->{chapter_title}}
-          if defined($other->{chapter_title});
+          = {value => $other->{interest_title}}
+          if defined($other->{interest_title});
         $bldss_result->{'./metadata/itemOfInterestLevel/author'}
-          = {value => $other->{chapter_author}}
-          if defined($other->{chapter_author});
+          = {value => $other->{interest_author}}
+          if defined($other->{interest_author});
         $bldss_result->{'./metadata/itemOfInterestLevel/pages'}
           = {value => $other->{pages}}
           if defined($other->{pages});
@@ -385,12 +416,16 @@ sub create {
         $response->{stage}  = 'extra_details';
         $response->{params} = $other;
         $response->{value}  = {
+
+          # titleLevel
           title  => $bldss_result->{'./metadata/titleLevel/title'}->{value},
           author => $bldss_result->{'./metadata/titleLevel/author'}->{value},
           publisher =>
             $bldss_result->{'./metadata/titleLevel/publisher'}->{value},
-          isbn    => $bldss_result->{'./metadata/titleLevel/isbn'}->{value},
-          issn    => $bldss_result->{'./metadata/titleLevel/issn'}->{value},
+          isbn => $bldss_result->{'./metadata/titleLevel/isbn'}->{value},
+          issn => $bldss_result->{'./metadata/titleLevel/issn'}->{value},
+
+          # itemLevel
           edition => $bldss_result->{'./metadata/itemLevel/edition'}->{value},
           year    => $bldss_result->{'./metadata/itemLevelLevel/year'}->{value}
         };
