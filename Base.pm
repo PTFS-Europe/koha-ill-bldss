@@ -25,6 +25,7 @@ use Clone qw( clone );
 use Locale::Country;
 use XML::LibXML;
 use MARC::Record;
+use C4::Context;
 use C4::Biblio qw( AddBiblio );
 use Koha::Illrequest::Config;
 use Koha::Illbackends::BLDSS::BLDSS::API;
@@ -353,9 +354,6 @@ sub create {
 
   # Create request from search result
   elsif ('commit' eq $stage) {
-    use Data::Dumper;
-    warn "Entering commit\n";
-    warn Dumper($other);
 
     # We should have the data we need for an API derived Record.
     # ...Populate Illrequest
@@ -373,42 +371,42 @@ sub create {
         # itemLevel
         $bldss_result->{'./metadata/itemLevel/year'}
           //= {value => $other->{item_year}}
-          if defined($other->{item_year});
+          if $other->{item_year};
         $bldss_result->{'./metadata/itemLevel/volume'}
           = {value => $other->{item_volume}}
-          if defined($other->{item_volume});
+          if $other->{item_volume};
         $bldss_result->{'./metadata/itemLevel/issue'}
           = {value => $other->{item_issue}}
-          if defined($other->{item_issue});
+          if $other->{item_issue};
         $bldss_result->{'./metadata/itemLevel/part'}
           = {value => $other->{item_part}}
-          if defined($other->{item_part});
+          if $other->{item_part};
         $bldss_result->{'./metadata/itemLevel/edition'}
           //= {value => $other->{item_edition}}
-          if defined($other->{item_edition});
+          if $other->{item_edition};
         $bldss_result->{'./metadata/itemLevel/season'}
           = {value => $other->{item_season}}
-          if defined($other->{item_season});
+          if $other->{item_season};
         $bldss_result->{'./metadata/itemLevel/month'}
           = {value => $other->{item_month}}
-          if defined($other->{item_month});
+          if $other->{item_month};
         $bldss_result->{'./metadata/itemLevel/day'}
           = {value => $other->{item_day}}
-          if defined($other->{item_day});
+          if $other->{item_day};
         $bldss_result->{'./metadata/itemLevel/specialIssue'}
           = {value => $other->{item_special_issue}}
-          if defined($other->{item_special_issue});
+          if $other->{item_special_issue};
 
         # itemOfInterestLevel
         $bldss_result->{'./metadata/itemOfInterestLevel/title'}
           = {value => $other->{interest_title}}
-          if defined($other->{interest_title});
+          if $other->{interest_title};
         $bldss_result->{'./metadata/itemOfInterestLevel/author'}
           = {value => $other->{interest_author}}
-          if defined($other->{interest_author});
+          if $other->{interest_author};
         $bldss_result->{'./metadata/itemOfInterestLevel/pages'}
           = {value => $other->{pages}}
-          if defined($other->{pages});
+          if $other->{pages};
       }
 
       # Request more details
@@ -416,6 +414,7 @@ sub create {
         $response->{stage}  = 'extra_details';
         $response->{params} = $other;
         $response->{value}  = {
+          type => $bldss_result->{'./type'}->{value},
 
           # titleLevel
           title  => $bldss_result->{'./metadata/titleLevel/title'}->{value},
@@ -429,8 +428,6 @@ sub create {
           edition => $bldss_result->{'./metadata/itemLevel/edition'}->{value},
           year    => $bldss_result->{'./metadata/itemLevelLevel/year'}->{value}
         };
-        warn "Response: \n";
-        warn Dumper($response);
         return $response;
       }
     }
@@ -1171,37 +1168,74 @@ sub _process {
 
 sub availability {
   my ($self, $params) = @_;
-  my $metadata = $self->metadata($params->{request});
-  my $response = $self->_process($self->_api->availability(
-    $metadata->{UIN}, {year => $metadata->{Year}}));
-  $response->{method} = "confirm";
-  $response->{stage}  = "availability";
+
+  my $response = {method => "confirm", stage => "availability"};
+
+  my $request = $params->{request};
+  my $uin = $request->illrequestattributes->find({type => './uin'})->value;
+  my @interesting_fields = (
+    "./metadata/itemLevel/year",    "./metadata/itemLevel/volume",
+    "./metadata/itemLevel/part",    "./metadata/itemLevel/issue",
+    "./metadata/itemLevel/edition", "./metadata/itemLevel/season",
+    "./metadata/itemLevel/month",   "./metadata/itemLevel/day",
+    "./metadata/itemLevel/specialIssue"
+  );
+  my $fieldResults = $request->illrequestattributes->search(
+    {type => {'-in' => \@interesting_fields}});
+  my $opt = {
+    map {
+      my $key = $_->type;
+      $key =~ s/\.\/metadata\/itemLevel\///g;
+      ($key => $_->value)
+    } ($fieldResults->as_list)
+  };
+
+  my $result = $self->_process($self->_api->availability($uin, $opt));
+  $response = {%{$response}, %{$result}};
   return $response if ($response->{error});
+
   my $availability = $response->{value}->result->availability;
+
   my @formats;
-
-  foreach my $format (@{$availability->formats}) {
-    my @speeds;
-    foreach my $speed (@{$format->speeds}) {
-      push @speeds,
-        {speed => ["Speed", $speed->textContent], key => ["Key", $speed->key],};
-    }
-    my @qualities;
-    foreach my $quality (@{$format->qualities}) {
-      push @qualities,
-        {
-        quality => ["Quality", $quality->textContent],
-        key     => ["Key",     $quality->key],
-        };
-    }
-
+  if ($self->_isTitleLevel($request)) {
+    my @speeds = (
+      {speed => ["Speed", "24 Hours"],      key => ["Key", 3]},
+      {speed => ["Speed", "Within 4 days"], key => ["Key", 4]}
+    );
     push @formats,
       {
-      format    => ["Format",    $format->deliveryFormat->textContent],
-      key       => ["Key",       $format->deliveryFormat->key],
-      speeds    => ["Speeds",    \@speeds],
-      qualities => ["Qualities", \@qualities],
+      format => ["Format", "Loan"],
+      key    => ["Key",    6],
+      speeds => ["Speeds", \@speeds]
       };
+  }
+  else {
+    foreach my $format (@{$availability->formats}) {
+      my @speeds;
+      foreach my $speed (@{$format->speeds}) {
+        push @speeds,
+          {
+          speed => ["Speed", $speed->textContent],
+          key   => ["Key",   $speed->key],
+          };
+      }
+      my @qualities;
+      foreach my $quality (@{$format->qualities}) {
+        push @qualities,
+          {
+          quality => ["Quality", $quality->textContent],
+          key     => ["Key",     $quality->key],
+          };
+      }
+
+      push @formats,
+        {
+        format    => ["Format",    $format->deliveryFormat->textContent],
+        key       => ["Key",       $format->deliveryFormat->key],
+        speeds    => ["Speeds",    \@speeds],
+        qualities => ["Qualities", \@qualities],
+        };
+    }
   }
 
   $response->{value} = {
@@ -1213,6 +1247,24 @@ sub availability {
   };
   $response->{future} = "pricing";
   return $response;
+}
+
+sub _isTitleLevel {
+  my ($self, $request) = @_;
+
+  my $typeResult = $request->illrequestattributes->find({type => './type'});
+  return 0 if ($typeResult->value eq 'article');
+
+  my @itemOfInterest_fields = (
+    "./metadata/itemOfInterestLevel/title",
+    "./metadata/itemOfInterestLevel/pages",
+    "./metadata/itemOfInterestLevel/author"
+  );
+  my $searchResults = $request->illrequestattributes->search(
+    {type => {'-in' => \@itemOfInterest_fields}});
+  my $isTitle = $searchResults->count ? 0 : 1;
+
+  return $isTitle;
 }
 
 sub create_order {

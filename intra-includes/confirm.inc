@@ -28,6 +28,7 @@
       </li>
       [% END %]
     </ul>
+    [% IF format.qualities %]
     <h5>[% format.qualities.0 %]</h5>
     <ul>
       [% FOREACH quality IN format.qualities.1 %]
@@ -40,6 +41,7 @@
       </li>
       [% END %]
     </ul>
+    [% END %]
     <br/>
     <input class="btn btn-default" type="submit" value="Check this price" />
   </fieldset>
