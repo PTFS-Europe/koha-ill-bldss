@@ -54,7 +54,7 @@
         <label for="type">Type:</label>
         <select name="type" id="type">
           <option value=""/>
-          [% FOREACH opt IN [ 'Book' 'Article' 'Journal' ] %]
+          [% FOREACH opt IN [ 'Book' 'Article' 'Journal' 'Newspaper' 'Conference' 'Thesis' 'Score' ] %]
           [% IF ( whole.value.other.type == opt ) %]
           <option value="[% opt %]" selected="selected">[% opt %]</option>
           [% ELSE %]
