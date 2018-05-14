@@ -168,24 +168,49 @@ In BLDSS we provide the following k/v fields:
 sub metadata {
   my ($self, $request) = @_;
   my $attrs = $request->illrequestattributes;
-  return {
-    UIN    => $attrs->find({type => './uin'})->value,
-    Title  => $attrs->find({type => './metadata/titleLevel/title'})->value,
-    Author => $attrs->find({type => './metadata/titleLevel/author'})->value,
-    Publisher =>
-      $attrs->find({type => './metadata/titleLevel/publisher'})->value,
-    "Shelf mark" =>
-      $attrs->find({type => './metadata/titleLevel/shelfmark'})->value,
-    Year   => $attrs->find({type => './metadata/itemLevel/year'})->value,
-    Issue  => $attrs->find({type => './metadata/itemLevel/issue'})->value,
-    Volume => $attrs->find({type => './metadata/itemLevel/volume'})->value,
-    "Item part title" =>
-      $attrs->find({type => './metadata/itemOfInterestLevel/title'})->value,
-    "Item part pages" =>
-      $attrs->find({type => './metadata/itemOfInterestLevel/pages'})->value,
-    "Item part author" =>
-      $attrs->find({type => './metadata/itemOfInterestLevel/author'})->value,
-  };
+  my $return = {UIN => $attrs->find({type => './uin'})->value};
+  $return->{Title}
+    = $attrs->find({type => './metadata/titleLevel/title'})
+    ? $attrs->find({type => './metadata/titleLevel/title'})->value
+    : undef;
+  $return->{Author}
+    = $attrs->find({type => './metadata/titleLevel/author'})
+    ? $attrs->find({type => './metadata/titleLevel/author'})->value
+    : undef;
+  $return->{Publisher}
+    = $attrs->find({type => './metadata/titleLevel/publisher'})
+    ? $attrs->find({type => './metadata/titleLevel/publisher'})->value
+    : undef;
+  $return->{"Shelf mark"}
+    = $attrs->find({type => './metadata/titleLevel/shelfmark'})
+    ? $attrs->find({type => './metadata/titleLevel/shelfmark'})->value
+    : undef;
+  $return->{Year}
+    = $attrs->find({type => './metadata/itemLevel/year'})
+    ? $attrs->find({type => './metadata/itemLevel/year'})->value
+    : undef;
+  $return->{Issue}
+    = $attrs->find({type => './metadata/itemLevel/issue'})
+    ? $attrs->find({type => './metadata/itemLevel/issue'})->value
+    : undef;
+  $return->{Volume}
+    = $attrs->find({type => './metadata/itemLevel/volume'})
+    ? $attrs->find({type => './metadata/itemLevel/volume'})->value
+    : undef;
+  $return->{"Item part title"}
+    = $attrs->find({type => './metadata/itemOfInterestLevel/title'})
+    ? $attrs->find({type => './metadata/itemOfInterestLevel/title'})->value
+    : undef;
+  $return->{"Item part pages"}
+    = $attrs->find({type => './metadata/itemOfInterestLevel/pages'})
+    ? $attrs->find({type => './metadata/itemOfInterestLevel/pages'})->value
+    : undef;
+  $return->{"Item part author"}
+    = $attrs->find({type => './metadata/itemOfInterestLevel/author'})
+    ? $attrs->find({type => './metadata/itemOfInterestLevel/author'})->value
+    : undef;
+
+  return $return;
 }
 
 #### Standard Method Calls
@@ -370,42 +395,42 @@ sub create {
 
         # itemLevel
         $bldss_result->{'./metadata/itemLevel/year'}
-          //= {value => $other->{item_year}}
+          ||= {value => $other->{item_year}}
           if $other->{item_year};
         $bldss_result->{'./metadata/itemLevel/volume'}
-          = {value => $other->{item_volume}}
+          ||= {value => $other->{item_volume}}
           if $other->{item_volume};
         $bldss_result->{'./metadata/itemLevel/issue'}
-          = {value => $other->{item_issue}}
+          ||= {value => $other->{item_issue}}
           if $other->{item_issue};
         $bldss_result->{'./metadata/itemLevel/part'}
-          = {value => $other->{item_part}}
+          ||= {value => $other->{item_part}}
           if $other->{item_part};
         $bldss_result->{'./metadata/itemLevel/edition'}
-          //= {value => $other->{item_edition}}
+          ||= {value => $other->{item_edition}}
           if $other->{item_edition};
         $bldss_result->{'./metadata/itemLevel/season'}
-          = {value => $other->{item_season}}
+          ||= {value => $other->{item_season}}
           if $other->{item_season};
         $bldss_result->{'./metadata/itemLevel/month'}
-          = {value => $other->{item_month}}
+          ||= {value => $other->{item_month}}
           if $other->{item_month};
         $bldss_result->{'./metadata/itemLevel/day'}
-          = {value => $other->{item_day}}
+          ||= {value => $other->{item_day}}
           if $other->{item_day};
         $bldss_result->{'./metadata/itemLevel/specialIssue'}
-          = {value => $other->{item_special_issue}}
+          ||= {value => $other->{item_special_issue}}
           if $other->{item_special_issue};
 
         # itemOfInterestLevel
         $bldss_result->{'./metadata/itemOfInterestLevel/title'}
-          = {value => $other->{interest_title}}
+          ||= {value => $other->{interest_title}}
           if $other->{interest_title};
         $bldss_result->{'./metadata/itemOfInterestLevel/author'}
-          = {value => $other->{interest_author}}
+          ||= {value => $other->{interest_author}}
           if $other->{interest_author};
         $bldss_result->{'./metadata/itemOfInterestLevel/pages'}
-          = {value => $other->{pages}}
+          ||= {value => $other->{pages}}
           if $other->{pages};
       }
 
@@ -452,13 +477,15 @@ sub create {
 
       # Sometimes we attempt to store the same illrequestattribute
       # twice.  We simply ignore when that happens.
-      try {
-        Koha::Illrequestattribute->new({
-          illrequest_id => $request->illrequest_id,
-          type          => $type,
-          value         => $value->{value},
-        })->store;
-      };
+      if ($value->{value}) {
+        try {
+          Koha::Illrequestattribute->new({
+            illrequest_id => $request->illrequest_id,
+            type          => $type,
+            value         => $value->{value},
+          })->store;
+        };
+      }
     }
 
     # Return
@@ -928,7 +955,7 @@ sub _store_search {
 
     # Sometimes we attempt to store the same illrequestattribute
     # twice.  We simply ignore when that happens.
-    if (defined($value)) {
+    if ($value) {
       try {
         Koha::Illrequestattribute->new({
           illrequest_id => $request->illrequest_id,
