@@ -1297,11 +1297,10 @@ sub _isTitleLevel {
 sub create_order {
   my ($self, $params) = @_;
 
-  my $request = $params->{request};
-  my $brw     = Koha::Patrons->find($request->borrowernumber);
-  my $branch  = Koha::Libraries->find($request->branchcode);
-  my $brw_cat = $brw->categorycode;
-  my $details;
+  my $request   = $params->{request};
+  my $brw       = Koha::Patrons->find($request->borrowernumber);
+  my $branch    = Koha::Libraries->find($request->branchcode);
+  my $brw_cat   = $brw->categorycode;
   my $final_out = {
     error   => 0,
     status  => '',
@@ -1311,21 +1310,22 @@ sub create_order {
     next    => 'illview',
     value   => {}
   };
+  my $service;
   if ($params->{other}->{speed}) {
-    $details = {
+    $service = {
       speed   => $params->{other}->{speed},
       quality => $params->{other}->{quality},
       format  => $params->{other}->{format},
     };
   }
   else {
-    $details
+    $service
       = $self->getDefaultFormat({
       brw_cat => $brw_cat, branch => $branch->branchcode,
       });
   }
   my ($status, $delivery) = $self->validate_delivery_input({
-    service           => $details,
+    service           => $service,
     borrower          => $brw,
     branch            => $branch,
     digital_recipient => $self->getDigitalRecipient({
@@ -1338,7 +1338,7 @@ sub create_order {
   }
 
   my $is_available
-    = $self->validate_available({request => $request, details => $details});
+    = $self->validate_available({request => $request, details => $service});
 
   if (!$is_available) {
     return {
@@ -1348,22 +1348,42 @@ sub create_order {
     };
   }
 
-  my $metadata      = $self->metadata($params->{request});
+  my $metadata           = $self->metadata($params->{request});
+  my @interesting_fields = (
+    "./metadata/itemLevel/year",    "./metadata/itemLevel/volume",
+    "./metadata/itemLevel/part",    "./metadata/itemLevel/issue",
+    "./metadata/itemLevel/edition", "./metadata/itemLevel/season",
+    "./metadata/itemLevel/month",   "./metadata/itemLevel/day",
+    "./metadata/itemLevel/specialIssue"
+  );
+  my $fieldResults = $request->illrequestattributes->search(
+    {type => {'-in' => \@interesting_fields}});
+  my $itemLevel = {
+    map {
+      my $key = $_->type;
+      $key =~ s/\.\/metadata\/itemLevel\///g;
+      ($key => $_->value)
+    } ($fieldResults->as_list)
+  };
+
   my $final_details = {
     type => "S",
     Item => {
       uin => $metadata->{UIN},
 
-      # At least one item of interest criterium is required for 'paper'
-      # book requests.  But this is not always provided by the BL.
-      # Through no fault of our own, we may end in a dead-end.
+      # Item level detail can be sent to aid in identifying the specific
+      # issue or volume an itemOfInterest should be selected.
+      itemLevel => $itemLevel,
+
+      # Item of interest level detail is required if the request is not
+      # a phyical item loan.
       itemOfInterestLevel => {
         title  => $metadata->{'Item Title'},
         pages  => $metadata->{'Item Pages'},
         author => $metadata->{'Item Author'},
       }
     },
-    service  => $details,
+    service  => $service,
     Delivery => $delivery,
 
     # Optional params:
@@ -1392,10 +1412,26 @@ sub validate_available {
 
   my ($speed_avail, $quality_avail) = 0;
 
-  my $metadata = $self->metadata($params->{request});
-  my $response = $self->_process($self->_api->availability(
-    $metadata->{UIN}, {year => $metadata->{Year}}));
+  my $request = $params->{request};
+  my $uin = $request->illrequestattributes->find({type => './uin'})->value;
+  my @interesting_fields = (
+    "./metadata/itemLevel/year",    "./metadata/itemLevel/volume",
+    "./metadata/itemLevel/part",    "./metadata/itemLevel/issue",
+    "./metadata/itemLevel/edition", "./metadata/itemLevel/season",
+    "./metadata/itemLevel/month",   "./metadata/itemLevel/day",
+    "./metadata/itemLevel/specialIssue"
+  );
+  my $fieldResults = $request->illrequestattributes->search(
+    {type => {'-in' => \@interesting_fields}});
+  my $opt = {
+    map {
+      my $key = $_->type;
+      $key =~ s/\.\/metadata\/itemLevel\///g;
+      ($key => $_->value)
+    } ($fieldResults->as_list)
+  };
 
+  my $response = $self->_process($self->_api->availability($uin, $opt));
   return 0 if ($response->{error});
 
   my $availability = $response->{value}->result->availability;
