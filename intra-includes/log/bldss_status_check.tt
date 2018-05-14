@@ -1,0 +1,4 @@
+<p>
+[% log.timestamp | $KohaDates with_hours => 1 %] : <b>BLDSS status checked </b>
+received response &quot;[% log.info.response %]&quot;
+</p>

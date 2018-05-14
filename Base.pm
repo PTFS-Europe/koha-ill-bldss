@@ -19,6 +19,7 @@ package Koha::Illbackends::BLDSS::Base;
 
 use Modern::Perl;
 use Carp;
+use File::Basename qw( dirname );
 
 use Koha::Libraries;
 use Clone qw( clone );
@@ -31,9 +32,11 @@ use Koha::Illrequest::Config;
 use Koha::Illbackends::BLDSS::BLDSS::API;
 use Koha::Illbackends::BLDSS::BLDSS::Config;
 use Koha::Illbackends::BLDSS::BLDSS::XML;
+use Koha::Illrequest::Logger;
 use Try::Tiny;
 use URI::Escape;
 use YAML;
+use JSON qw( to_json );
 
 # We will be implementing the Abstract interface.
 #use base qw(Koha::ILLRequest::Abstract);
@@ -68,6 +71,9 @@ sub new {
   my $api    = Koha::Illbackends::BLDSS::BLDSS::API->new($config);
   $self->_config($config);
   $self->_api($api);
+  $self->{templates} = {
+    'BLDSS_STATUS_CHECK' => dirname(__FILE__) . '/intra-includes/log/bldss_status_check.tt'
+  };
   return $self;
 }
 
@@ -734,6 +740,19 @@ sub status {
       = $self->_process($self->_api->order($params->{request}->orderid));
     $status->{method} = "status";
     $status->{stage}  = "show_status";
+
+    # Log this check
+    my $logger = Koha::Illrequest::Logger->new;
+    $logger->set_data({
+        actionname   => 'BLDSS_STATUS_CHECK',
+        objectnumber => $params->{request}->id,
+        infos        => to_json({
+            log_origin => $self->name,
+            response   => $status->{value}->result->orderline->overallStatus
+        })
+    });
+    $logger->log_something();
+
     return $status;
   }
   else {
@@ -748,6 +767,20 @@ sub status {
       stage   => "commit",
     };
   }
+}
+
+=head3 get_log_template_path
+
+    my $path = $BLDSS->get_log_template_path($action);
+
+Given an action, return the path to the template for displaying
+that action log
+
+=cut
+
+sub get_log_template_path {
+    my ($self, $action) = @_;
+    return $self->{templates}->{$action};
 }
 
 #### Helpers
