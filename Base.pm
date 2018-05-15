@@ -32,7 +32,6 @@ use Koha::Illrequest::Config;
 use Koha::Illbackends::BLDSS::BLDSS::API;
 use Koha::Illbackends::BLDSS::BLDSS::Config;
 use Koha::Illbackends::BLDSS::BLDSS::XML;
-use Koha::Illrequest::Logger;
 use Try::Tiny;
 use URI::Escape;
 use YAML;
@@ -71,6 +70,7 @@ sub new {
   my $api    = Koha::Illbackends::BLDSS::BLDSS::API->new($config);
   $self->_config($config);
   $self->_api($api);
+  $self->_logger($params->{logger}) if ($params->{logger});
   $self->{templates} = {
     'BLDSS_STATUS_CHECK' => dirname(__FILE__) . '/intra-includes/log/bldss_status_check.tt'
   };
@@ -90,6 +90,21 @@ sub _api {
   my ($self, $api) = @_;
   $self->{api} = $api if ($api);
   return $self->{api};
+}
+
+=head3 _logger
+
+    my $logger = $bldss->_logger($logger);
+    my $logger = $bldss->_logger;
+
+Getter/Setter for our Logger object.
+
+=cut
+
+sub _logger {
+  my ($self, $logger) = @_;
+  $self->{logger} = $logger if ($logger);
+  return $self->{logger};
 }
 
 =head3 _config
@@ -741,17 +756,19 @@ sub status {
     $status->{method} = "status";
     $status->{stage}  = "show_status";
 
-    # Log this check
-    my $logger = Koha::Illrequest::Logger->new;
-    $logger->set_data({
-        actionname   => 'BLDSS_STATUS_CHECK',
-        objectnumber => $params->{request}->id,
-        infos        => to_json({
-            log_origin => $self->name,
-            response   => $status->{value}->result->orderline->overallStatus
-        })
-    });
-    $logger->log_something();
+    # Log this check if appropriate
+    if ($self->_logger) {
+        my $logger = $self->_logger;
+        $logger->set_data({
+            actionname   => 'BLDSS_STATUS_CHECK',
+            objectnumber => $params->{request}->id,
+            infos        => to_json({
+                log_origin => $self->name,
+                response   => $status->{value}->result->orderline->overallStatus
+            })
+        });
+        $logger->log_something();
+    }
 
     return $status;
   }
