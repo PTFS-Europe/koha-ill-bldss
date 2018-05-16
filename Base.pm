@@ -444,15 +444,24 @@ sub create {
           if $other->{item_special_issue};
 
         # itemOfInterestLevel
-        $bldss_result->{'./metadata/itemOfInterestLevel/title'}
-          ||= {value => $other->{interest_title}}
-          if $other->{interest_title};
-        $bldss_result->{'./metadata/itemOfInterestLevel/author'}
-          ||= {value => $other->{interest_author}}
-          if $other->{interest_author};
-        $bldss_result->{'./metadata/itemOfInterestLevel/pages'}
-          ||= {value => $other->{pages}}
-          if $other->{pages};
+        if (
+            !length $bldss_result->{'./metadata/itemOfInterestLevel/title'}->{value} &&
+            length $other->{interest_author}
+        ) {
+           $bldss_result->{'./metadata/itemOfInterestLevel/title'}->{value} = $other->{interest_author}; 
+        }
+        if (
+            !length $bldss_result->{'./metadata/itemOfInterestLevel/author'}->{value} &&
+            length $other->{interest_author}
+        ) {
+           $bldss_result->{'./metadata/itemOfInterestLevel/author'}->{value} = $other->{interest_author}; 
+        }
+        if (
+            !length $bldss_result->{'./metadata/itemOfInterestLevel/pages'}->{value} &&
+            length $other->{pages}
+        ) {
+           $bldss_result->{'./metadata/itemOfInterestLevel/pages'}->{value} = $other->{pages}; 
+        }
       }
 
       # Request more details
