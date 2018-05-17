@@ -453,10 +453,10 @@ sub create {
                 if (
                     !length $bldss_result->{
                         './metadata/itemOfInterestLevel/title'}->{value}
-                    && length $other->{interest_author} )
+                    && length $other->{interest_title} )
                 {
                     $bldss_result->{'./metadata/itemOfInterestLevel/title'}
-                      ->{value} = $other->{interest_author};
+                      ->{value} = $other->{interest_title};
                 }
                 if (
                     !length $bldss_result->{
