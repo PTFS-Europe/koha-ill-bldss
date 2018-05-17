@@ -253,39 +253,46 @@
     <ol>
       <li>
         <label for="rtitle">Title:</label>
-        <input type="text" name="rtitle" id="rtitle" value="[% whole.value.title %]" readonly/>
+        [% whole.value.title %]
+        <input type="hidden" name="rtitle" id="rtitle" value="[% whole.value.title %]"/>
       </li>
       [% IF whole.value.type == 'book' %]
       <li>
         <label for="rauthor">Author:</label>
-        <input type="text" name="rauthor" id="rauthor" value="[% whole.value.author %]" readonly/>
+        [% whole.value.author %]
+        <input type="hidden" name="rauthor" id="rauthor" value="[% whole.value.author %]"/>
       </li>
       [% END %]
       [% IF whole.value.publisher %]
       <li>
         <label for="rpublisher">Publisher:</label>
-        <input type="text" name="rpublisher" id="rpublisher" value="[% whole.value.publisher %]" readonly/>
+        [% whole.value.publisher %]
+        <input type="hidden" name="rpublisher" id="rpublisher" value="[% whole.value.publisher %]"/>
       </li>
       [% END %]
       [% IF whole.value.type == 'book' %]
       <li>
         <label for="risbn">ISBN:</label>
-        <input type="text" name="risbn" id="risbn" value="[% whole.value.isbn %]" readonly/>
+        [% whole.value.isbn %]
+        <input type="hidden" name="risbn" id="risbn" value="[% whole.value.isbn %]"/>
       </li>
       [% ELSIF (whole.value.type == 'journal' || whole.value.type == 'newspaper') && whole.value.issn  %]
       <li>
         <label for="rissn">ISSN:</label>
-        <input type="text" name="rissn" id="rissn" value="[% whole.value.issn %]" readonly/>
+        [% whole.value.issn %]
+        <input type="hidden" name="rissn" id="rissn" value="[% whole.value.issn %]"/>
       </li>
       [% END %]
       [% IF (whole.value.type == 'book') && whole.value.edition %]
       <li>
         <label for="redition">Edition:</label>
-        <input type="text" name="redition" id="redition" value="[% whole.value.edition %]" readonly/>
+        [% whole.value.edition %]
+        <input type="hidden" name="redition" id="redition" value="[% whole.value.edition %]"/>
       </li>
       <li>
         <label for="ryear">Year:</label>
-        <input type="text" name="ryear" id="ryear" value="[% whole.value.year %]" readonly/>
+        [% whole.value.year %]
+        <input type="hidden" name="ryear" id="ryear" value="[% whole.value.year %]"/>
       </li>
       [% END %]
     </ol>
