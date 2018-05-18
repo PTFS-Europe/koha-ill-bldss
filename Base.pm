@@ -21,6 +21,7 @@ use Modern::Perl;
 use Carp;
 use File::Basename qw( dirname );
 
+use Koha::Logger;
 use Koha::Libraries;
 use Clone qw( clone );
 use Locale::Country;
@@ -33,6 +34,7 @@ use Koha::Illbackends::BLDSS::BLDSS::API;
 use Koha::Illbackends::BLDSS::BLDSS::Config;
 use Koha::Illbackends::BLDSS::BLDSS::XML;
 use Try::Tiny;
+use CGI;
 use URI::Escape;
 use YAML;
 use JSON qw( to_json );
@@ -61,6 +63,23 @@ ILL Interface.
 
 =cut
 
+# Map item level metadata from form supplied
+# keys to BLDSS metadata keys
+my $key_map = {
+    item_year          => './metadata/itemlevel/year',
+    item_volume        => './metadata/itemlevel/volume',
+    item_issue         => './metadata/itemlevel/issue',
+    item_part          => './metadata/itemlevel/part',
+    item_edition       => './metadata/itemlevel/edition',
+    item_season        => './metadata/itemlevel/season',
+    item_month         => './metadata/itemlevel/month',
+    item_day           => './metadata/itemlevel/day',
+    item_special_issue => './metadata/itemlevel/specialissue',
+    interest_title     => './metadata/itemofinterestlevel/title',
+    interest_author    => './metadata/itemofinterestlevel/author',
+    pages              => './metadata/itemofinterestlevel/pages',
+};
+
 sub new {
     my ( $class, $params ) = @_;
     my $self = {
@@ -71,6 +90,7 @@ sub new {
     my $config =
       Koha::Illbackends::BLDSS::BLDSS::Config->new( $params->{config} );
     my $api = Koha::Illbackends::BLDSS::BLDSS::API->new($config);
+    $self->{cgi} = new CGI;
     $self->_config($config);
     $self->_api($api);
     $self->_logger( $params->{logger} ) if ( $params->{logger} );
@@ -410,69 +430,23 @@ sub create {
         # We should have the data we need for an API derived Record.
         # ...Populate Illrequest
         my $request      = $params->{request};
+        my @read_write   = $self->{cgi}->multi_param('read_write');
         my $patron       = Koha::Patrons->find( $other->{borrowernumber} );
         my $bldss_result = $self->_find( $other->{uin} );
 
-     # If this is a 'book' or 'journal' request ask the user if they wish to add
-     # further details to turn it into a chapter or issue request.
+        # If this is a 'book' or 'journal' request ask the user if they wish
+        # to add further details to turn it into a chapter or issue request.
         if ( $bldss_result->{'./type'}->{value} =~ /book|journal|newspaper/ ) {
 
             # Augment bldss_result with submitted details
             if ( $other->{complete} ) {
-
-                # itemLevel
-                $bldss_result->{'./metadata/itemLevel/year'} ||=
-                  { value => $other->{item_year} }
-                  if $other->{item_year};
-                $bldss_result->{'./metadata/itemLevel/volume'} ||=
-                  { value => $other->{item_volume} }
-                  if $other->{item_volume};
-                $bldss_result->{'./metadata/itemLevel/issue'} ||=
-                  { value => $other->{item_issue} }
-                  if $other->{item_issue};
-                $bldss_result->{'./metadata/itemLevel/part'} ||=
-                  { value => $other->{item_part} }
-                  if $other->{item_part};
-                $bldss_result->{'./metadata/itemLevel/edition'} ||=
-                  { value => $other->{item_edition} }
-                  if $other->{item_edition};
-                $bldss_result->{'./metadata/itemLevel/season'} ||=
-                  { value => $other->{item_season} }
-                  if $other->{item_season};
-                $bldss_result->{'./metadata/itemLevel/month'} ||=
-                  { value => $other->{item_month} }
-                  if $other->{item_month};
-                $bldss_result->{'./metadata/itemLevel/day'} ||=
-                  { value => $other->{item_day} }
-                  if $other->{item_day};
-                $bldss_result->{'./metadata/itemLevel/specialIssue'} ||=
-                  { value => $other->{item_special_issue} }
-                  if $other->{item_special_issue};
-
-                # itemOfInterestLevel
-                if (
-                    !length $bldss_result->{
-                        './metadata/itemOfInterestLevel/title'}->{value}
-                    && length $other->{interest_title} )
-                {
-                    $bldss_result->{'./metadata/itemOfInterestLevel/title'}
-                      ->{value} = $other->{interest_title};
-                }
-                if (
-                    !length $bldss_result->{
-                        './metadata/itemOfInterestLevel/author'}->{value}
-                    && length $other->{interest_author} )
-                {
-                    $bldss_result->{'./metadata/itemOfInterestLevel/author'}
-                      ->{value} = $other->{interest_author};
-                }
-                if (
-                    !length $bldss_result->{
-                        './metadata/itemOfInterestLevel/pages'}->{value}
-                    && length $other->{pages} )
-                {
-                    $bldss_result->{'./metadata/itemOfInterestLevel/pages'}
-                      ->{value} = $other->{pages};
+                foreach my $key ( keys %{$key_map} ) {
+                    my $value = $key_map->{$key};
+                    if (  !length $bldss_result->{$value}->{value}
+                        && length $other->{$key} > 0 )
+                    {
+                        $bldss_result->{$value}->{value} = $other->{$key};
+                    }
                 }
             }
 
@@ -518,26 +492,13 @@ sub create {
         $request->updated( DateTime->now );
         $request->store;
 
-        # ...Add original query details to result for storage
+        # Store the request attributes
+        $self->create_illrequestattributes( $bldss_result, $request,
+            \@read_write );
+
+        # Add original query details to result for storage
         $self->_store_search( $request, $bldss_result, $other );
 
-        # ...Populate Illrequestattributes
-        while ( my ( $type, $value ) = each %{$bldss_result} ) {
-
-            # Sometimes we attempt to store the same illrequestattribute
-            # twice.  We simply ignore when that happens.
-            if ( $value->{value} ) {
-                try {
-                    Koha::Illrequestattribute->new(
-                        {
-                            illrequest_id => $request->illrequest_id,
-                            type          => $type,
-                            value         => $value->{value},
-                        }
-                    )->store;
-                };
-            }
-        }
 
         # Return
         return {
@@ -702,17 +663,9 @@ sub migrate {
             # ...Add original query details to result for storage
             $self->_store_search( $request, $bldss_result, $other );
 
-            # ...Populate Illrequestattributes
+            # Store the request attributes
             $bldss_result->{migrated_from}->{value} = $other->{illrequest_id};
-            while ( my ( $type, $value ) = each %{$bldss_result} ) {
-                Koha::Illrequestattribute->new(
-                    {
-                        illrequest_id => $request->illrequest_id,
-                        type          => $type,
-                        value         => $value->{value},
-                    }
-                )->store;
-            }
+            $self->create_illrequestattributes( $bldss_result, $request );
 
             return {
                 error   => 0,
@@ -1047,23 +1000,52 @@ sub _store_search {
     $search_attributes->{'srchany'} = $params->{query}
       if defined( $params->{query} );
 
-    while ( my ( $type, $value ) = each %{$search_attributes} ) {
+    # Store the request attributes
+    $self->create_illrequestattributes( $search_attributes, $request );
+
+    return 1;
+}
+
+sub create_illrequestattributes {
+    my ( $self, $attr, $request, $read_write ) = @_;
+
+    # Populate Illrequestattributes
+    while ( my ( $type, $value ) = each %{$attr} ) {
+
+        # $value may be a string or a hashref
+        my $resolved_value;
+        if (   ref $value eq 'HASH'
+            && $value->{value}
+            && length $value->{value} > 0 )
+        {
+            $resolved_value = $value->{value};
+        }
+        elsif ( !ref $value && length $value > 0 ) {
+            $resolved_value = $value;
+        }
+
+        my $data = {
+            illrequest_id => $request->illrequest_id,
+            type          => $type,
+            value         => $resolved_value
+        };
+
+        # We may need this attribute to be read-write
+        if ($read_write) {
+            my $key = $key_map->{$type};
+            if ( $data->{value} && grep { $_ eq $key } @{$read_write} ) {
+                $data->{readonly} = 0;
+            }
+        }
 
         # Sometimes we attempt to store the same illrequestattribute
         # twice.  We simply ignore when that happens.
-        if ($value) {
+        if ( $data->{value} ) {
             try {
-                Koha::Illrequestattribute->new(
-                    {
-                        illrequest_id => $request->illrequest_id,
-                        type          => $type,
-                        value         => $value,
-                    }
-                )->store;
+                Koha::Illrequestattribute->new($data)->store;
             };
         }
     }
-
     return 1;
 }
 

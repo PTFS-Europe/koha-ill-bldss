@@ -304,34 +304,42 @@
       <li>
         <label for="item_year">Year:</label>
         <input type="text" name="item_year" id="item_year" type="text" value=""/>
+        <input type="hidden" name="read_write" value="item_year"/>
       </li>
       <li>
         <label for="item_season">Season:</label>
         <input type="text" name="item_season" id="item_season" type="text" value=""/>
+        <input type="hidden" name="read_write" value="item_season"/>
       </li>
       <li>
         <label for="item_month">Month:</label>
         <input type="text" name="item_month" id="item_month" type="text" value=""/>
+        <input type="hidden" name="read_write" value="item_month"/>
       </li>
       <li>
         <label for="item_day">Day:</label>
         <input type="text" name="item_day" id="item_day" type="text" value=""/>
+        <input type="hidden" name="read_write" value="item_day"/>
       </li>
       <li>
         <label for="item_volume">Volume:</label>
         <input type="text" name="item_volume" id="item_volume" type="text" value=""/>
+        <input type="hidden" name="read_write" value="item_volume"/>
       </li>
       <li>
         <label for="item_part">Part:</label>
         <input type="text" name="item_part" id="item_part" type="text" value=""/>
+        <input type="hidden" name="read_write" value="item_part"/>
       </li>
       <li>
         <label for="item_issue">Issue:</label>
         <input type="text" name="item_issue" id="item_issue" type="text" value=""/>
+        <input type="hidden" name="read_write" value="item_issue"/>
       </li>
       <li>
         <label for="item_special_issue">Special issue:</label>
         <input type="text" name="item_special_issue" id="item_special_issue" type="text" value=""/>
+        <input type="hidden" name="read_write" value="item_special_issue"/>
       </li>
     </ol>
   </fieldset>
@@ -350,6 +358,7 @@
         <label for="interest_title">Article title:</label>
         [% END %]
         <input type="text" name="interest_title" id="interest_title" type="text" value=""/>
+        <input type="hidden" name="read_write" value="interest_title"/>
       </li>
       <li>
         [% IF whole.value.type == 'book' %]
@@ -358,10 +367,12 @@
         <label for="interest_author">Article author:</label>
         [% END %]
         <input type="text" name="interest_author" id="interest_author" type="text" value=""/>
+        <input type="hidden" name="read_write" value="interest_author"/>
       </li>
       <li>
         <label for="pages">Pages:</label>
         <input type="text" name="pages" id="pages" type="text" value=""/>
+        <input type="hidden" name="read_write" value="pages"/>
       </li>
     </ol>
   </fieldset>
