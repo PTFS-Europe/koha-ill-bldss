@@ -21,7 +21,6 @@ use Modern::Perl;
 use Carp;
 use File::Basename qw( dirname );
 
-use Koha::Logger;
 use Koha::Libraries;
 use Clone qw( clone );
 use Locale::Country;
@@ -63,23 +62,6 @@ ILL Interface.
 
 =cut
 
-# Map item level metadata from form supplied
-# keys to BLDSS metadata keys
-my $key_map = {
-    item_year          => './metadata/itemlevel/year',
-    item_volume        => './metadata/itemlevel/volume',
-    item_issue         => './metadata/itemlevel/issue',
-    item_part          => './metadata/itemlevel/part',
-    item_edition       => './metadata/itemlevel/edition',
-    item_season        => './metadata/itemlevel/season',
-    item_month         => './metadata/itemlevel/month',
-    item_day           => './metadata/itemlevel/day',
-    item_special_issue => './metadata/itemlevel/specialissue',
-    interest_title     => './metadata/itemofinterestlevel/title',
-    interest_author    => './metadata/itemofinterestlevel/author',
-    pages              => './metadata/itemofinterestlevel/pages',
-};
-
 sub new {
     my ( $class, $params ) = @_;
     my $self = {
@@ -93,10 +75,42 @@ sub new {
     $self->{cgi} = new CGI;
     $self->_config($config);
     $self->_api($api);
+    $self->_key_map;
     $self->_logger( $params->{logger} ) if ( $params->{logger} );
     $self->{templates} = { 'BLDSS_STATUS_CHECK' => dirname(__FILE__)
           . '/intra-includes/log/bldss_status_check.tt' };
     return $self;
+}
+
+=head _key_map
+
+    my $key_map = $bldss->_key_map;
+
+Initialiser for our key_map
+
+=cut
+
+sub _key_map {
+    my ( $self ) = @_;
+
+    # Map item level metadata from form supplied
+    # keys to BLDSS metadata keys
+    $self->{key_map} = {
+        item_year          => './metadata/itemlevel/year',
+        item_volume        => './metadata/itemlevel/volume',
+        item_issue         => './metadata/itemlevel/issue',
+        item_part          => './metadata/itemlevel/part',
+        item_edition       => './metadata/itemlevel/edition',
+        item_season        => './metadata/itemlevel/season',
+        item_month         => './metadata/itemlevel/month',
+        item_day           => './metadata/itemlevel/day',
+        item_special_issue => './metadata/itemlevel/specialissue',
+        interest_title     => './metadata/itemofinterestlevel/title',
+        interest_author    => './metadata/itemofinterestlevel/author',
+        pages              => './metadata/itemofinterestlevel/pages',
+    };
+
+    return $self->{key_map};
 }
 
 =head3 _api
@@ -440,8 +454,8 @@ sub create {
 
             # Augment bldss_result with submitted details
             if ( $other->{complete} ) {
-                foreach my $key ( keys %{$key_map} ) {
-                    my $value = $key_map->{$key};
+                foreach my $key ( keys %{$self->{key_map}} ) {
+                    my $value = $self->{key_map}->{$key};
                     if (  !length $bldss_result->{$value}->{value}
                         && length $other->{$key} > 0 )
                     {
@@ -1032,8 +1046,7 @@ sub create_illrequestattributes {
 
         # We may need this attribute to be read-write
         if ($read_write) {
-            my $key = $key_map->{$type};
-            if ( $data->{value} && grep { $_ eq $key } @{$read_write} ) {
+            if ( $data->{value} && grep { $self->{key_map}->{$_} eq $type } @{$read_write} ) {
                 $data->{readonly} = 0;
             }
         }
