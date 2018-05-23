@@ -303,42 +303,42 @@
     <ol>
       <li>
         <label for="item_year">Year:</label>
-        <input type="text" name="item_year" id="item_year" type="text" value=""/>
+        <input type="text" name="item_year" id="item_year" type="text" value="[% whole.value.item_year %]"/>
         <input type="hidden" name="read_write" value="item_year"/>
       </li>
       <li>
         <label for="item_season">Season:</label>
-        <input type="text" name="item_season" id="item_season" type="text" value=""/>
+        <input type="text" name="item_season" id="item_season" type="text" value="[% whole.value.item_season %]"/>
         <input type="hidden" name="read_write" value="item_season"/>
       </li>
       <li>
         <label for="item_month">Month:</label>
-        <input type="text" name="item_month" id="item_month" type="text" value=""/>
+        <input type="text" name="item_month" id="item_month" type="text" value="[% whole.value.item_month %]"/>
         <input type="hidden" name="read_write" value="item_month"/>
       </li>
       <li>
         <label for="item_day">Day:</label>
-        <input type="text" name="item_day" id="item_day" type="text" value=""/>
+        <input type="text" name="item_day" id="item_day" type="text" value="[% whole.value.item_day %]"/>
         <input type="hidden" name="read_write" value="item_day"/>
       </li>
       <li>
         <label for="item_volume">Volume:</label>
-        <input type="text" name="item_volume" id="item_volume" type="text" value=""/>
+        <input type="text" name="item_volume" id="item_volume" type="text" value="[% whole.value.item_volume %]"/>
         <input type="hidden" name="read_write" value="item_volume"/>
       </li>
       <li>
         <label for="item_part">Part:</label>
-        <input type="text" name="item_part" id="item_part" type="text" value=""/>
+        <input type="text" name="item_part" id="item_part" type="text" value="[% whole.value.item_part %]"/>
         <input type="hidden" name="read_write" value="item_part"/>
       </li>
       <li>
         <label for="item_issue">Issue:</label>
-        <input type="text" name="item_issue" id="item_issue" type="text" value=""/>
+        <input type="text" name="item_issue" id="item_issue" type="text" value="[% whole.value.item_issue %]"/>
         <input type="hidden" name="read_write" value="item_issue"/>
       </li>
       <li>
         <label for="item_special_issue">Special issue:</label>
-        <input type="text" name="item_special_issue" id="item_special_issue" type="text" value=""/>
+        <input type="text" name="item_special_issue" id="item_special_issue" type="text" value="[% item_special_issue %]"/>
         <input type="hidden" name="read_write" value="item_special_issue"/>
       </li>
     </ol>
@@ -357,7 +357,7 @@
         [% ELSIF (whole.value.type == 'journal' || whole.value.type == 'newspaper') %]
         <label for="interest_title">Article title:</label>
         [% END %]
-        <input type="text" name="interest_title" id="interest_title" type="text" value=""/>
+        <input type="text" name="interest_title" id="interest_title" type="text" value="[% whole.value.interest_title %]"/>
         <input type="hidden" name="read_write" value="interest_title"/>
       </li>
       <li>
@@ -366,12 +366,12 @@
         [% ELSIF (whole.value.type == 'journal' || whole.value.type == 'newspaper') %]
         <label for="interest_author">Article author:</label>
         [% END %]
-        <input type="text" name="interest_author" id="interest_author" type="text" value=""/>
+        <input type="text" name="interest_author" id="interest_author" type="text" value="[% whole.value.interest_author %]"/>
         <input type="hidden" name="read_write" value="interest_author"/>
       </li>
       <li>
         <label for="pages">Pages:</label>
-        <input type="text" name="pages" id="pages" type="text" value=""/>
+        <input type="text" name="pages" id="pages" type="text" value="[% whole.value.pages %]"/>
         <input type="hidden" name="read_write" value="pages"/>
       </li>
     </ol>
