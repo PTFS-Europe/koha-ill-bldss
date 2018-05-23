@@ -91,30 +91,30 @@ Initialiser for our key_map
 =cut
 
 sub _key_map {
-    my ( $self ) = @_;
+    my ($self) = @_;
 
     # Map item level metadata from form supplied
     # keys to BLDSS metadata keys
     $self->{key_map} = {
-        title               => './metadata/titleLevel/title',
-        author              => './metadata/titleLevel/author',
-        publisher           => './metadata/titleLevel/publisher',
-        isbn                => './metadata/titleLevel/isbn',
-        issn                => './metadata/titleLevel/issn',
-        edition             => './metadata/itemLevel/edition',
-        year                => './metadata/itemLevelLevel/year',
-        item_year           => './metadata/itemLevel/year',
-        item_volume         => './metadata/itemLevel/volume',
-        item_issue          => './metadata/itemLevel/issue',
-        item_part           => './metadata/itemLevel/part',
-        item_edition        => './metadata/itemLevel/edition',
-        item_season         => './metadata/itemLevel/season',
-        item_month          => './metadata/itemLevel/month',
-        item_day            => './metadata/itemLevel/day',
-        item_special_issue  => './metadata/itemLevel/specialissue',
-        interest_title      => './metadata/itemofinterestlevel/title',
-        interest_author     => './metadata/itemofinterestlevel/author',
-        pages               => './metadata/itemofinterestlevel/pages',
+        title              => './metadata/titleLevel/title',
+        author             => './metadata/titleLevel/author',
+        publisher          => './metadata/titleLevel/publisher',
+        isbn               => './metadata/titleLevel/isbn',
+        issn               => './metadata/titleLevel/issn',
+        edition            => './metadata/itemLevel/edition',
+        year               => './metadata/itemLevelLevel/year',
+        item_year          => './metadata/itemLevel/year',
+        item_volume        => './metadata/itemLevel/volume',
+        item_issue         => './metadata/itemLevel/issue',
+        item_part          => './metadata/itemLevel/part',
+        item_edition       => './metadata/itemLevel/edition',
+        item_season        => './metadata/itemLevel/season',
+        item_month         => './metadata/itemLevel/month',
+        item_day           => './metadata/itemLevel/day',
+        item_special_issue => './metadata/itemLevel/specialissue',
+        interest_title     => './metadata/itemofinterestlevel/title',
+        interest_author    => './metadata/itemofinterestlevel/author',
+        pages              => './metadata/itemofinterestlevel/pages',
     };
 
     return $self->{key_map};
@@ -470,7 +470,7 @@ sub create {
 
             # Augment bldss_result with submitted details
             if ( $other->{complete} ) {
-                foreach my $key ( keys %{$self->{key_map}} ) {
+                foreach my $key ( keys %{ $self->{key_map} } ) {
                     my $value = $self->{key_map}->{$key};
                     if (  !length $bldss_result->{$value}->{value}
                         && length $other->{$key} > 0 )
@@ -529,7 +529,6 @@ sub create {
         # Add original query details to result for storage
         $self->_store_search( $request, $bldss_result, $other );
 
-
         # Return
         return {
             status  => "",
@@ -571,40 +570,46 @@ sub edititem {
         message       => '',
     };
 
-
     # Don't allow editing of submitted requests
     $response->{method} = 'illlist' if $params->{request}->status ne 'NEW';
 
-    if ($stage eq 'form') {
+    if ( $stage eq 'form' ) {
+
         # Map the BLDSS keys into form keys
-        my %rev = reverse %{$self->{key_map}};
+        my %rev = reverse %{ $self->{key_map} };
+
         # Attributes for this request
         my $attr = $params->{request}->illrequestattributes->unblessed;
+
         # Prepare our return
         my $out = {};
-        foreach my $meta(@{$attr}) {
-            if ($rev{$meta->{type}}) {
-               $out->{$rev{$meta->{type}}} = $meta->{value};
-            } elsif ($meta->{type} eq './type') {
+        foreach my $meta ( @{$attr} ) {
+            if ( $rev{ $meta->{type} } ) {
+                $out->{ $rev{ $meta->{type} } } = $meta->{value};
+            }
+            elsif ( $meta->{type} eq './type' ) {
                 $out->{type} = $meta->{value};
             }
         }
         $response->{value} = $out;
-        return $response
-    } elsif ($stage eq 'commit') {
-        my $request      = $params->{request};
-        my $passed       = $params->{other};
-        my @read_write   = $self->{cgi}->multi_param('read_write');
+        return $response;
+    }
+    elsif ( $stage eq 'commit' ) {
+        my $request    = $params->{request};
+        my $passed     = $params->{other};
+        my @read_write = $self->{cgi}->multi_param('read_write');
 
         # Update the writeable fields that we've been passed
-        foreach my $attr(@read_write) {
+        foreach my $attr (@read_write) {
             my $bldss_key = $self->{key_map}->{$attr};
-            my $value = $passed->{$attr};
-            if ($bldss_key && $value) {
-                my $current_attr = Koha::Illrequestattributes->find({
-                    illrequest_id => $request->id,
-                    type          => $bldss_key
-                });
+            my $value     = $passed->{$attr};
+            if ( $bldss_key && $value ) {
+                my $current_attr = Koha::Illrequestattributes->find(
+                    {
+                        illrequest_id => $request->id,
+                        type          => $bldss_key
+                    }
+                );
                 if ($current_attr) {
                     $current_attr->value($value);
                     $current_attr->store;
@@ -615,10 +620,10 @@ sub edititem {
         $response->{method} = 'illlist';
         return $response;
 
-    } else {
+    }
+    else {
         return $response;
     }
-
 
 }
 
@@ -1136,7 +1141,9 @@ sub create_illrequestattributes {
 
         # We may need this attribute to be read-write
         if ($read_write) {
-            if ( $data->{value} && grep { $self->{key_map}->{$_} eq $type } @{$read_write} ) {
+            if ( $data->{value} && grep { $self->{key_map}->{$_} eq $type }
+                @{$read_write} )
+            {
                 $data->{readonly} = 0;
             }
         }
@@ -1407,21 +1414,17 @@ sub availability {
 
     my $availability = $response->{value}->result->availability;
 
+    # Formats
+    # 1 = Encrypted Download, 2 = Unencrypted download,
+    # 3 = Secure File Transfer, 4 = Paper, 5 = CD/DVD,
+    # 6 = Loan
     my @formats;
-    if ( $self->_isTitleLevel($request) ) {
-        my @speeds = (
-            { speed => [ "Speed", "24 Hours" ],      key => [ "Key", 3 ] },
-            { speed => [ "Speed", "Within 4 days" ], key => [ "Key", 4 ] }
-        );
-        push @formats,
-          {
-            format => [ "Format", "Loan" ],
-            key    => [ "Key",    6 ],
-            speeds => [ "Speeds", \@speeds ]
-          };
-    }
-    else {
-        foreach my $format ( @{ $availability->formats } ) {
+    my $isTitle = $self->_isTitleLevel($request);
+    foreach my $format ( @{ $availability->formats } ) {
+        if (   ( !$isTitle && ( $format->deliveryFormat->key <= 5 ) )
+            || ( $isTitle && ( $format->deliveryFormat->key == 6 ) ) )
+        {
+
             my @speeds;
             foreach my $speed ( @{ $format->speeds } ) {
                 push @speeds,
@@ -1583,7 +1586,7 @@ sub create_order {
         Delivery => $delivery,
 
         # Optional params:
-        requestor => join( " ", $brw->firstname, $brw->surname ),
+        requestor         => join( " ", $brw->firstname, $brw->surname ),
         customerReference => $request->illrequest_id,
         payCopyright      => $self->getPayCopyright($branch),
     };
@@ -1687,7 +1690,7 @@ sub prices {
         price           => [ "Price",             $price->textContent ],
         service         => [ "Service",           $service->{id} ],
         coordinates     => $coordinates,
-        illrequest_id => $params->{request}->illrequest_id
+        illrequest_id   => $params->{request}->illrequest_id
     };
     $response->{method} = "confirm";
     $response->{stage}  = "pricing";

@@ -726,19 +726,19 @@ __END__
 
 =item Search
 
-http://api.bldss.bl.uk/api/search - HTTP GET
+https://api.bldss.bl.uk/api/search - HTTP GET
 
 =item Availability
 
-http://api.bldss.bl.uk/api/availability - HTTP GET
+https://api.bldss.bl.uk/api/availability - HTTP GET
 
 =item Create Order
 
-http://api.bldss.bl.uk/api/orders - HTTP POST
+https://api.bldss.bl.uk/api/orders - HTTP POST
 
 =item Match
 
-http://api.bldss.bl.uk/api/match - HTTP GET
+https://api.bldss.bl.uk/api/match - HTTP GET
 
 =back
 
@@ -748,23 +748,23 @@ http://api.bldss.bl.uk/api/match - HTTP GET
 
 =item View Order(s)
 
-http://api.bldss.bl.uk/api/orders - HTTP GET
+https://api.bldss.bl.uk/api/orders - HTTP GET
 
 =item Cancel Order
 
-http://api.bldss.bl.uk/api/orders - HTTP DELETE
+https://api.bldss.bl.uk/api/orders - HTTP DELETE
 
 =item Renew A Loan
 
-http://api.bldss.bl.uk/api/renewLoan - HTTP PUT
+https://api.bldss.bl.uk/api/renewLoan - HTTP PUT
 
 =item Report A Problem
 
-http://api.bldss.bl.uk/api/reportProblem - HTTP PUT
+https://api.bldss.bl.uk/api/reportProblem - HTTP PUT
 
 =item Get Prices
 
-http://api.bldss.bl.uk/api/prices - HTTP GET
+https://api.bldss.bl.uk/api/prices - HTTP GET
 
 =back
 
@@ -774,23 +774,23 @@ http://api.bldss.bl.uk/api/prices - HTTP GET
 
 =item Check exchange rates
 
-http://api.bldss.bl.uk/reference/currencies - HTTP GET
+https://api.bldss.bl.uk/reference/currencies - HTTP GET
 
 =item Document delivery format keys
 
-http://api.bldss.bl.uk/reference/formats - HTTP GET
+https://api.bldss.bl.uk/reference/formats - HTTP GET
 
 =item Document delivery speed keys
 
-http://api.bldss.bl.uk/reference/speeds - HTTP GET
+https://api.bldss.bl.uk/reference/speeds - HTTP GET
 
 =item Document delivery quality keys
 
-http://api.bldss.bl.uk/reference/quality - HTTP GET
+https://api.bldss.bl.uk/reference/quality - HTTP GET
 
 =item Document delivery problem keys
 
-http://api.bldss.bl.uk/reference/problemTypes - HTTP GET
+https://api.bldss.bl.uk/reference/problemTypes - HTTP GET
 
 =back
 
