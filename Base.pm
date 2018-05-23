@@ -593,12 +593,10 @@ sub edititem {
         return $response
     } elsif ($stage eq 'commit') {
         my $request      = $params->{request};
+        my $passed       = $params->{other};
         my @read_write   = $self->{cgi}->multi_param('read_write');
 
         # Update the writeable fields that we've been passed
-        my $passed = $params->{other};
-        my $request = $params->{request};
-
         foreach my $attr(@read_write) {
             my $bldss_key = $self->{key_map}->{$attr};
             my $value = $passed->{$attr};
