@@ -69,7 +69,7 @@
     <legend>Borrower Options</legend>
     <ol>
       <li>
-        <label class="required" for="cardnumber">Card number or surname:</label>
+        <label class="required" for="cardnumber">Card number, username or surname:</label>
         <input type="text" name="cardnumber" id="cardnumber" type="text"
 	       value="[% whole.value.other.cardnumber %]" />
       </li>
