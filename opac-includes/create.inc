@@ -109,7 +109,7 @@
   </span>
   <a href="[% url %]" title="Restart search" class="btn btn-default pull-right" role="button">Amend your search</a>
 </p>
-<table class="table table-bordered table-striped">
+<table id="ill-opac-results" class="table table-bordered table-striped">
   <thead>
     <tr>
     [% FOREACH field IN whole.value.0 %]
@@ -123,8 +123,8 @@
     [% FOREACH field IN record %]
     [% IF field.value.inSummary %]
     [% value = field.value.value || "N/A" %]
-      <td>
       [% IF field.key == './uin' %]
+      <td class="ill-action">
       [% url = here _ "?method=create&amp;stage=commit" %]
       [% url = url _ "&amp;backend=" _ whole.backend %]
       [% url = url _ "&amp;borrowernumber=" _ whole.borrowernumber %]
@@ -138,6 +138,7 @@
       [% url = url _ "&amp;uin=" _ value %]
         <a href="[% url %]">Request [% value %]</a>
       [% ELSE %]
+        <td>
         [% value %]
       [% END %]
       </td>
