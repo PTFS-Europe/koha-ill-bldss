@@ -222,10 +222,13 @@ sub getApiSpec {
         name: Identifier
       publisher:
         name: Publisher
+        inSummary: yes
       issn:
         name: ISSN
+        inSummary: yes
       isbn:
         name: ISBN
+        inSummary: yes
       ismn:
         name: ISMN
       shelfmark:
@@ -254,6 +257,7 @@ sub getApiSpec {
         name: Part Number
       edition:
         name: Edition
+        inSummary: yes
       season:
         name: Season
       month:
