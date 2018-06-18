@@ -1,13 +1,18 @@
 
 * Additional configuration to be set in koha-conf.xml
 
-  Currently our configuration accepts 5 additional parameters from
+  Currently our configuration accepts 6 additional parameters from
   koha-conf.xml:
   - <api_key>
   - <api_key_auth>
   - <api_application>
   - <api_application_auth>
   - <api_url>
+  - <is_outside_uk>
   Normally only <api_application> and <api_application_auth> need to
   be set.  <api_url> defaults to the test environment, so it should be
   set when switching to production, to "https://api.bldss.bl.uk".
+  <is_outside_uk> should be set according to whether the request is being made
+  from an institution outside the UK. If not, an additional flag is sent to
+  the BLDSS API request: <payCopyright>true</payCopyright>. If this flag is
+  not present in the config, we will assume the institution is inside the UK

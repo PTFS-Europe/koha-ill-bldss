@@ -237,7 +237,8 @@ sub cancel_order {
 
 sub create_order {
   my ($self, $order_ref) = @_;
-  my $xml        = _encode_order($order_ref);
+  my $outside_uk  = $self->{config}->{is_outside_uk};
+  my $xml        = _encode_order($order_ref, $outside_uk);
   my $url_string = $self->{config}->api_url . '/api/orders';
   my $url        = URI->new($url_string);
   return $self->_request(
@@ -571,9 +572,14 @@ sub _authentication_header {
 }
 
 sub _encode_order {
-  my $ref     = shift;
+  my ($ref, $outside_uk) = @_;
   my $doc     = XML::LibXML::Document->new();
   my $request = $doc->createElement('NewOrderRequest');
+  if ($outside_uk) {
+    my $uk_flag = $doc->createElement('payCopyright');
+    $uk_flag->appendTextNode('true');
+    $request->appendChild($uk_flag);
+  }
   my $element = $doc->createElement('type');
   if ($ref->{type} =~ m/^S/i) {    # Synchronous or s allowed
     $element->appendTextNode('S');
