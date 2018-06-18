@@ -30,7 +30,8 @@ sub new {
     api_key_auth         => $config->{api_key_auth}         || "API1394039",
     api_application      => $config->{api_application}      || "BLAPI8IJdN",
     api_application_auth => $config->{api_application_auth} || "m7eZz1CCu7",
-    api_url       => $config->{api_url} || "http://apitest.bldss.bl.uk",
+    api_url       => $config->{api_url} || "https://apitest.bldss.bl.uk",
+    is_outside_uk => $config->{is_outside_uk} || 0,
     config        => $config,
     configuration => $configuration,
   };
