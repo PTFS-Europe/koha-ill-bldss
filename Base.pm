@@ -40,6 +40,9 @@ use JSON qw( to_json );
 # We will be implementing the Abstract interface.
 #use base qw(Koha::ILLRequest::Abstract);
 
+## Every backend should have a version
+our $VERSION = "00.00.00";
+
 =head1 NAME
 
 Koha::Illbackends::BLDSS::Base - Koha ILL Backend: BLDSS
