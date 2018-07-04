@@ -41,7 +41,7 @@ use JSON qw( to_json );
 #use base qw(Koha::ILLRequest::Abstract);
 
 ## Every backend should have a version
-our $VERSION = "00.00.00";
+our $VERSION = "17.11.00.001";
 
 =head1 NAME
 
