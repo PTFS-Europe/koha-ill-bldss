@@ -1469,7 +1469,9 @@ sub create_order {
 sub validate_available {
   my ($self, $params) = @_;
 
-  my ($speed_avail, $quality_avail) = 0;
+  my $speed_avail   = 0;
+  my $quality_avail = 0;
+
 
   my $request = $params->{request};
   my $uin = $request->illrequestattributes->find({type => './uin'})->value;
