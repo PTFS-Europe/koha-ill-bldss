@@ -1013,7 +1013,7 @@ sub _store_search {
         my $isbns = $result->{'./metadata/titleLevel/isbn'}->{value};
         if ($isbns) {
             $search_attributes->{isbn} = $isbns;
-            $search_attributes->{isbn} =~ s/|/,/g;
+            $search_attributes->{isbn} =~ s/\|/,/g;
         }
         $search_attributes->{title} =
           $result->{'./metadata/titleLevel/title'}->{value};
