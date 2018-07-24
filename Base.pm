@@ -1590,7 +1590,7 @@ sub create_order {
 
         # Optional params:
         requestor         => join( " ", $brw->firstname, $brw->surname ),
-        customerReference => $request->illrequest_id,
+        customerReference => $request->id_prefix . '-' . $request->illrequest_id,
         payCopyright      => $self->getPayCopyright($branch),
     };
 
