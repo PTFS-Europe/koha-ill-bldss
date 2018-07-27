@@ -542,7 +542,7 @@ sub _authentication_header {
 
   push @parameters, 'api_application', $self->{config}->api_application,
     'api_key', $self->{config}->api_key, 'nonce', $nonce_string,
-    'override_encoding_method', "on", 'request_time', $t, 'signature_method',
+    'request_time', $t, 'signature_method',
     'HMAC-SHA1';
   if ($request_body) {
     push @parameters, 'request', uri_escape($request_body);
@@ -556,9 +556,13 @@ sub _authentication_header {
   @parameters = map {"$_=$p_hash{$_}"} keys %p_hash;
 
   my $parameter_string = join '&', sort { lc($a) cmp lc($b) } @parameters;
+  $parameter_string = uri_escape($parameter_string);
+  # uri_escape escapes spaces as %20, we need them to be %2B
+  # (escaped +) in the parameter string
+  $parameter_string =~s/\%20/%2B/g;
   return $parameter_string if ($return eq "parameter_string");
   my $request_string = join '&', $method, uri_escape($path),
-    uri_escape($parameter_string);
+    $parameter_string;
   return $request_string if ($return eq "request_string");
   my $hmac = Digest::HMAC_SHA1->new($self->{config}->hashing_key);
   $hmac->add($request_string);
