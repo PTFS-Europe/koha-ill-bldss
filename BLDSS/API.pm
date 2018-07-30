@@ -557,9 +557,16 @@ sub _authentication_header {
 
   my $parameter_string = join '&', sort { lc($a) cmp lc($b) } @parameters;
   $parameter_string = uri_escape($parameter_string);
-  # uri_escape escapes spaces as %20, we need them to be %2B
-  # (escaped +) in the parameter string
-  $parameter_string =~s/\%20/%2B/g;
+  if ($request_body) {
+    # The % in the %20 that the earlier uri_escape escaped spaces as is
+    # getting double encoded to %2520 by the second uri_escape,
+    # we actually want it to be %2B
+    $parameter_string =~s/\%2520/%2B/g;
+  } else {
+    # uri_escape escapes spaces as %20, we need them to be %2B
+    # (escaped +) in the parameter string
+    $parameter_string =~s/\%20/%2B/g;
+  }
   return $parameter_string if ($return eq "parameter_string");
   my $request_string = join '&', $method, uri_escape($path),
     $parameter_string;
