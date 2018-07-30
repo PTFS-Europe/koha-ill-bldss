@@ -105,7 +105,7 @@ sub _key_map {
         isbn               => './metadata/titleLevel/isbn',
         issn               => './metadata/titleLevel/issn',
         edition            => './metadata/itemLevel/edition',
-        year               => './metadata/itemLevelLevel/year',
+        year               => './metadata/itemLevel/year',
         item_year          => './metadata/itemLevel/year',
         item_volume        => './metadata/itemLevel/volume',
         item_issue         => './metadata/itemLevel/issue',
@@ -507,7 +507,7 @@ sub create {
                     edition =>
                       $bldss_result->{'./metadata/itemLevel/edition'}->{value},
                     year =>
-                      $bldss_result->{'./metadata/itemLevelLevel/year'}->{value}
+                      $bldss_result->{'./metadata/itemLevel/year'}->{value}
                 };
                 return $response;
             }
