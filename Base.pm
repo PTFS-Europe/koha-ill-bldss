@@ -1580,9 +1580,9 @@ sub create_order {
             # Item of interest level detail is required if the request is not
             # a phyical item loan.
             itemOfInterestLevel => {
-                title  => $metadata->{'Item Title'},
-                pages  => $metadata->{'Item Pages'},
-                author => $metadata->{'Item Author'},
+                title  => $metadata->{'Item part title'},
+                pages  => $metadata->{'Item part pages'},
+                author => $metadata->{'Item part author'},
             }
         },
         service  => $service,
