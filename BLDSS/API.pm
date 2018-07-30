@@ -724,7 +724,10 @@ sub _add_item_element {
   my @itemOfInterestLevel_elements = qw( title pages author );
   $level = $doc->createElement('itemOfInterestLevel');
   foreach my $name (@itemOfInterestLevel_elements) {
-    if (exists $item->{itemOfInterestLevel}->{$name}) {
+    if (
+      exists $item->{itemOfInterestLevel}->{$name} &&
+      length $item->{itemOfInterestLevel}->{$name} > 0
+    ) {
       my $element = $doc->createElement($name);
       $element->appendTextNode($item->{itemOfInterestLevel}->{$name});
       $level->appendChild($element);
