@@ -115,9 +115,9 @@ sub _key_map {
         item_month         => './metadata/itemLevel/month',
         item_day           => './metadata/itemLevel/day',
         item_special_issue => './metadata/itemLevel/specialissue',
-        interest_title     => './metadata/itemofinterestlevel/title',
-        interest_author    => './metadata/itemofinterestlevel/author',
-        pages              => './metadata/itemofinterestlevel/pages',
+        interest_title     => './metadata/itemOfInterestLevel/title',
+        interest_author    => './metadata/itemOfInterestLevel/author',
+        pages              => './metadata/itemOfInterestLevel/pages',
     };
 
     return $self->{key_map};
