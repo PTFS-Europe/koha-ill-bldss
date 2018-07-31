@@ -935,7 +935,7 @@ sub bldss2biblio {
     # Create the MARC::Record object and populate
     my $record = MARC::Record->new();
     if ($isbn) {
-        my @isbns = split /|/, $isbn;
+        my @isbns = split /\|/, $isbn;
         for my $each (@isbns) {
             my $marc_isbn = MARC::Field->new( '020', '', '', a => $each );
             $record->append_fields($marc_isbn);
