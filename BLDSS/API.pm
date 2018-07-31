@@ -567,6 +567,9 @@ sub _authentication_header {
     # (escaped +) in the parameter string
     $parameter_string =~s/\%20/%2B/g;
   }
+  # Seemingly slashes (which are escaped to %2F) need to be double escaped
+  # Don't ask me why
+  $parameter_string =~ s/\%2F/%252F/g;
   return $parameter_string if ($return eq "parameter_string");
   my $request_string = join '&', $method, uri_escape($path),
     $parameter_string;
