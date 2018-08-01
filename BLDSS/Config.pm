@@ -88,6 +88,31 @@ sub getLibraryPrivileges {
   return $values;
 }
 
+=head3 getShouldLoanBook
+
+    my $shouldLoanBook = $config->getShouldLoanBook();
+
+Return whether the branch config has specified an unmediated
+flow should request the loan of a book if it's available
+
+=cut
+
+sub getShouldLoanBook {
+  my ($self) = @_;
+  # Per branch definitions
+  if (!$self->{config}->{branch}) {
+    # OK, no per branch config defined
+    return 0;
+  }
+  elsif (ref $self->{config}->{branch} eq 'HASH') {
+    return $self->{config}->{branch}->{loan_book_if_available} || 0;
+  }
+  elsif (ref $self->{config}->{branch} eq 'ARRAY') {
+    return 0;
+  }
+
+}
+
 =head3 getDefaultFormats
 
     my $defaultFormat = $config->getLimitRules('brw_cat' | 'branch')

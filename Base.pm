@@ -1164,6 +1164,7 @@ sub create_illrequestattributes {
 
 sub validate_delivery_input {
     my ( $self, $params ) = @_;
+
     my ( $fmt, $brw, $brn, $recipient ) = (
         $params->{service}->{format},
         $params->{borrower}, $params->{branch}, $params->{digital_recipient},
@@ -1516,7 +1517,13 @@ sub create_order {
                 branch  => $branch->branchcode,
             }
         );
+        # If a book loan is available, and the config says we should request it,
+        # then we should do so
+        if ($self->getShouldLoanBook()) {
+            $service->{format} = '6';
+        }
     }
+
     my ( $status, $delivery ) = $self->validate_delivery_input(
         {
             service           => $service,
@@ -1913,6 +1920,20 @@ sub getPayCopyright {
       $libraryPrivileges->{$branch} || $libraryPrivileges->{default} || 0;
     return 'false' if $privilege;
     return 'true';
+}
+
+=head3 getShouldLoanBook
+
+    my $shouldLoan = $bldss->shouldLoanBook();
+
+Return whether the branch config specifies whether a book loan
+should be requested if available
+
+=cut
+
+sub getShouldLoanBook {
+    my ($self) = @_;
+    return $self->_config->getShouldLoanBook();
 }
 
 =head3 getDefaultFormat
