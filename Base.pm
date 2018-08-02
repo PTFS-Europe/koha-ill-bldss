@@ -1519,7 +1519,14 @@ sub create_order {
         );
         # If a book loan is available, and the config says we should request it,
         # then we should do so
-        if ($self->getShouldLoanBook()) {
+        my $type = $request->illrequestattributes->find(
+            { type => './type' }
+        )->value;
+        if (
+            $type eq 'book' &&
+            $self->getShouldLoanBook() &&
+            $self->isLoanAvailable($request)
+        ) {
             $service->{format} = '6';
         }
     }
@@ -1618,6 +1625,17 @@ sub create_order {
 
     $final_out->{value} = { status => "On order", cost => $request->cost, };
     return $final_out;
+}
+
+sub isLoanAvailable {
+    my ($self, $request) = @_;
+
+    return $self->validate_available({
+        request => $request,
+        details => {
+            format => '6'
+        }
+    });
 }
 
 sub validate_available {
