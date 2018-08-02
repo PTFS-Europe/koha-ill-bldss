@@ -1623,8 +1623,18 @@ sub create_order {
 sub validate_available {
     my ( $self, $params ) = @_;
 
-    my $speed_avail   = 0;
-    my $quality_avail = 0;
+    my @potential = ('format', 'speed', 'quality');
+    my $available = {
+        format  => 0,
+        speed   => 0,
+        quality => 0
+    };
+    my $to_validate = {};
+
+    # Determine what we're validating
+    foreach my $test(@potential) {
+        $to_validate->{$test} = 1 if exists $params->{details}->{$test};
+    }
 
     my $request = $params->{request};
     my $uin =
@@ -1647,28 +1657,49 @@ sub validate_available {
     };
 
     my $response = $self->_process( $self->_api->availability( $uin, $opt ) );
+
     return 0 if ( $response->{error} );
 
     my $availability = $response->{value}->result->availability;
-
     foreach my $format ( @{ $availability->formats } ) {
-        foreach my $speed ( @{ $format->speeds } ) {
-            if (   $speed_avail == 0
-                && $speed->key eq $params->{details}->{speed} )
-            {
-                $speed_avail = 1;
+        if ($to_validate->{format}) {
+            if (
+                $available->{format} == 0 &&
+                $format->deliveryFormat->key eq $params->{details}->{format}
+            ) {
+                $available->{format} = 1;
             }
         }
-        foreach my $quality ( @{ $format->qualities } ) {
-            if (   $quality_avail == 0
-                && $quality->key eq $params->{details}->{quality} )
-            {
-                $quality_avail = 1;
+        if ($to_validate->{speed}) {
+            foreach my $speed ( @{ $format->speeds } ) {
+                if (
+                    $available->{speed} == 0 &&
+                    $speed->key eq $params->{details}->{speed}
+                ) {
+                    $available->{speed} = 1;
+                }
+            }
+        }
+        if ($to_validate->{quality}) {
+            foreach my $quality ( @{ $format->qualities } ) {
+                if (
+                    $available->{quality} == 0 &&
+                    $quality->key eq $params->{details}->{quality}
+                ) {
+                    $available->{quality} = 1;
+                }
             }
         }
     }
 
-    return $speed_avail && $quality_avail;
+    my $avail_total = 0;
+    foreach my $pot(@potential) {
+        if ($to_validate->{$pot} && $available->{$pot}) {
+            $avail_total++;
+        }
+    }
+
+    return $avail_total == scalar keys %{$to_validate};
 }
 
 sub prices {
