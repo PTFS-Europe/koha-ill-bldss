@@ -1329,7 +1329,7 @@ sub _process {
     my $message = $re->message;
     $response = $re;
     my $code = "This unusual case has not yet been defined: $message ($status)";
-    my $error = 0;
+    my $error = 1;
 
     if ( 0 == $status ) {
         if ( 'Order successfully cancelled' eq $message ) {
@@ -1341,7 +1341,7 @@ sub _process {
         elsif ( '' eq $message ) {
             $code = 'status_success';
         }
-
+        $error = 0;
     }
     elsif ( 1 == $status ) {
         if (
@@ -1349,38 +1349,29 @@ sub _process {
             eq $message )
         {
             $code  = 'branch_address_incomplete';
-            $error = 1;
         }
         else {
             $code  = 'invalid_request';
-            $error = 1;
         }
 
     }
     elsif ( 5 == $status ) {
         $code  = 'request_fail';
-        $error = 1;
     }
     elsif ( 9 == $status ) {
         $code  = 'service_unavailable';
-        $error = 1;
     }
     elsif ( 111 == $status ) {
         $code  = 'unavailable';
-        $error = 1;
-
     }
     elsif ( 162 == $status ) {
         $code  = 'cancel_fail';
-        $error = 1;
     }
     elsif ( 170 == $status ) {
         $code  = 'search_fail';
-        $error = 1;
     }
     elsif ( 701 == $status ) {
         $code  = 'request_fail';
-        $error = 1;
     }
 
     return {
