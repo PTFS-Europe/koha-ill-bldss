@@ -1229,6 +1229,10 @@ sub _process {
     $code  = 'request_fail';
     $error = 1;
   }
+  elsif (9 == $status) {
+    $code  = 'service_unavailable';
+    $error = 1;
+  }
   elsif (111 == $status) {
     $code  = 'unavailable';
     $error = 1;
