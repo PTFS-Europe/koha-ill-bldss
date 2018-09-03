@@ -726,6 +726,7 @@ sub _add_item_element {
   foreach my $name (@itemOfInterestLevel_elements) {
     if (
       exists $item->{itemOfInterestLevel}->{$name} &&
+      defined $item->{itemOfInterestLevel}->{$name} &&
       length $item->{itemOfInterestLevel}->{$name} > 0
     ) {
       my $element = $doc->createElement($name);
