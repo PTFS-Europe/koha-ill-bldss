@@ -66,7 +66,7 @@
     </ol>
   </fieldset>
   <fieldset class="rows">
-    <legend>Borrower Options</legend>
+    <legend>Patron options</legend>
     <ol>
       <li>
         <label class="required" for="cardnumber">Card number or surname:</label>
@@ -74,7 +74,7 @@
 	       value="[% whole.value.other.cardnumber %]" />
       </li>
       <li>
-        <label class="required" for="branchcode">Destination branch:</label>
+        <label class="required" for="branchcode">Destination library:</label>
         <select id="branchcode" name="branchcode">
           <option value="" />
           [% FOREACH branch IN branches %]
