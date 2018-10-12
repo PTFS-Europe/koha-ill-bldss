@@ -640,12 +640,14 @@ sub migrate {
     my ( $self, $params ) = @_;
     my $other = $params->{other};
 
-    my $stage = $other->{stage};
+    my $stage = $other->{stage} // 'immigrate';
     my $step  = $other->{step};
 
     # Recieve a new request from another backend and suppliment it with
     # anything we require speficifcally for this backend.
-    if ( !$stage || $stage eq 'immigrate' ) {
+    if ( $stage eq 'immigrate' ) {
+
+        $other->{stage} = $stage;
 
         my $response = {
             backend       => $self->name,
@@ -663,15 +665,22 @@ sub migrate {
         # Initiate immigration search
         if ( !$step || 'init' eq $step ) {
 
+            # FIXME: We do not current handle the 'amend search' option here
+
             # Fetch original request details
             my $original_request =
               Koha::Illrequests->find( $other->{illrequest_id} );
 
             # Collect parameters
+            $other->{step}              = 'search_results';
             $response->{step}           = 'search_results';
             $response->{query}          = $other->{query};
             $response->{params}         = $params;
+            $other->{borrowernumber}    = $original_request->borrowernumber;
             $response->{borrowernumber} = $original_request->borrowernumber;
+            $other->{cardnumber}        = $original_request->patron->cardnumber;
+            $response->{cardnumber}     = $original_request->patron->cardnumber;
+            $other->{branchcode}        = $original_request->branchcode;
             $response->{branchcode}     = $original_request->branchcode;
 
             # Initiate search with details from last request
@@ -696,8 +705,7 @@ sub migrate {
             my $results = $self->_search($params);
 
             # Merge and return
-            $response = { %{$response}, %{$results} };
-            return $response;
+            return { %{$response}, %{$results} };
         }
 
         # Load next results page
@@ -1862,13 +1870,15 @@ sub _search {
       . "&branchcode=$other->{branchcode}";
 
     $nav_qry .= "&step=$other->{step}" if $other->{step};
-    $nav_qry .= "&query=" . uri_escape( $other->{query} );
+    $nav_qry .= $other->{query} ? "&query=" . uri_escape( $other->{query} ) : '';
 
-    my $userstring = "[keywords: " . $other->{query} . "]";
+    my $userstring = '';
+    $userstring .= $other->{query} ? "[keywords: " . $other->{query} . "]" : '';
     while ( my ( $type, $value ) = each %{$opts} ) {
-        $userstring .= "[" . join( ": ", $type, $value ) . "]";
-        $nav_qry    .= "&" . join( "=",  $type, $value )
-          unless ( 'start_rec' eq $type );
+        $userstring .= $value ? "[" . join( ": ", $type, $value ) . "]" : '';
+        if ( 'start_rec' ne $type ) {
+          $nav_qry    .= $value ? "&" . join( "=",  $type, $value ) : '';
+        }
     }
     $response->{userstring} = $userstring;
 
