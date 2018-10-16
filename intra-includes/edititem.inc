@@ -19,6 +19,8 @@
     <legend>Book Details</legend>
     [% ELSIF whole.value.type == 'journal' %]
     <legend>Journal Details</legend>
+    [% ELSIF whole.value.type == 'article' %]
+    <legend>Article Details</legend>
     [% ELSIF whole.value.type == 'newspaper' %]
     <legend>Newspaper Details</legend>
     [% END %]
@@ -119,14 +121,14 @@
   <fieldset class="rows">
     [% IF whole.value.type == 'book' %]
     <legend>Chapter Details</legend>
-    [% ELSIF (whole.value.type == 'journal' || whole.value.type == 'newspaper') %]
+    [% ELSIF (whole.value.type == 'article') %]
     <legend>Article Details</legend>
     [% END %]
     <ol>
       <li>
         [% IF whole.value.type == 'book' %]
         <label for="interest_title">Chapter title:</label>
-        [% ELSIF (whole.value.type == 'journal' || whole.value.type == 'newspaper') %]
+        [% ELSIF (whole.value.type == 'article') %]
         <label for="interest_title">Article title:</label>
         [% END %]
         <input type="text" name="interest_title" id="interest_title" type="text" value="[% whole.value.interest_title %]"/>
@@ -135,7 +137,7 @@
       <li>
         [% IF whole.value.type == 'book' %]
         <label for="interest_author">Chapter author:</label>
-        [% ELSIF (whole.value.type == 'journal' || whole.value.type == 'newspaper') %]
+        [% ELSIF (whole.value.type == 'article') %]
         <label for="interest_author">Article author:</label>
         [% END %]
         <input type="text" name="interest_author" id="interest_author" type="text" value="[% whole.value.interest_author %]"/>
