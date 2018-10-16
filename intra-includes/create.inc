@@ -90,7 +90,7 @@
   </fieldset>
   <fieldset class="action">
     <input type="submit" value="Search"/>
-    <a class="cancel" href=[% parent %]>Cancel</a>
+    <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl">Cancel</a>
   </fieldset>
 </form>
 
@@ -132,7 +132,7 @@
   </fieldset>
   <fieldset class="action">
     <input type="submit" value="Select"/>
-    <a class="cancel" href=[% parent %]>Cancel</a>
+    <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl">Cancel</a>
   </fieldset>
 </form>
 
@@ -378,7 +378,7 @@
   </fieldset>
   <fieldset class="action">
     <input type="submit" value="Request"/>
-    <a class="cancel" href=[% parent %]>Cancel</a>
+    <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl">Cancel</a>
   </fieldset>
 </form>
 

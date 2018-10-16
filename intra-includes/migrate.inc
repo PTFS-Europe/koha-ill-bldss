@@ -71,7 +71,7 @@
       </fieldset>
       <fieldset class="action">
         <input type="submit" value="Search"/>
-        <a class="cancel" href=[% parent %]>Cancel</a>
+        <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl?method=illview&illrequest_id=[% whole.value.other.illrequest_id %]">Cancel</a>
       </fieldset>
     </form>
 
@@ -322,7 +322,7 @@
       </fieldset>
       <fieldset class="action">
         <input type="submit" value="Request"/>
-        <a class="cancel" href=[% parent %]>Cancel</a>
+        <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl?method=illview&illrequest_id=[% whole.value.other.illrequest_id %]">Cancel</a>
       </fieldset>
     </form>
   [% END %]

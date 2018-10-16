@@ -85,7 +85,7 @@
   </fieldset>
   <fieldset class="action">
     <input type="submit" value="Search"/>
-    <a class="cancel" href=[% parent %]>Cancel</a>
+    <a class="cancel" href="/cgi-bin/koha/opac-illrequests.pl">Cancel</a>
   </fieldset>
 </form>
 
@@ -314,7 +314,7 @@
   </fieldset>
   <fieldset class="action">
     <input type="submit" value="Request"/>
-    <a class="cancel" href=[% parent %]>Cancel</a>
+    <a class="cancel" href="/cgi-bin/koha/opac-illrequests.pl">Cancel</a>
   </fieldset>
 </form>
 
