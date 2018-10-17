@@ -1941,7 +1941,7 @@ sub getDigitalRecipient {
     my $brn_dig_recs = $self->_config->getDigitalRecipients('branch');
     my $brw_dig_recs = $self->_config->getDigitalRecipients('brw_cat');
     my $brw_dig_rec  = $brw_dig_recs->{ $params->{brw_cat} } || '';
-    my $brn_dig_rec  = $brn_dig_recs->{ $params->{branchcode} } || '';
+    my $brn_dig_rec  = $brn_dig_recs->{ $params->{branch} } || '';
     my $def_dig_rec  = $brw_dig_recs->{default} || '';
 
     my $dig_rec = "borrower";
