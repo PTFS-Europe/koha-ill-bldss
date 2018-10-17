@@ -463,7 +463,7 @@ sub _request {
 
     # Log the response
     $self->_log_response($res);
-    return $res->content;
+    return _clean_response($res->content);
   }
 
   # Log the error
@@ -520,6 +520,21 @@ sub _log_error {
   $log_me .= "STATUS: " . $res->status_line . "\n";
   $log_me .= "CONTENT " . $res->content . "\n";
   $self->{logger}->warn($log_me);
+}
+
+sub _clean_response {
+    my ($response) = @_;
+
+    my $clean = {
+        # Fix ' character being incorrectly encoded in CP-1252
+        'â€™' => "'",
+    };
+    foreach my $findme (keys %{$clean}) {
+        my $replaceme = $clean->{$findme};
+        $response=~s/$findme/$replaceme/g;
+    }
+
+    return $response;
 }
 
 sub _authentication_header {
