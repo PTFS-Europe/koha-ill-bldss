@@ -537,25 +537,30 @@ sub _authentication_header {
   $gen->{'S'} = ['A' .. 'Z', 'a' .. 'z', '0' .. '9', '.'];
   my $nonce_string = $params->{nonce} || $gen->randpattern('S' x 16);
 
-  my $path       = $uri->path;
-  my @parameters = $uri->query_form;
+  my $path  = $uri->path;
+  # We get at the parameters this way, rather than ->query_form
+  # because the latter escapes the parameters in an undesirable way
+  # we need the escaping to be consistent with the URL
+  my $query = $uri->query;
+  my @parameters = split('&', $query);
 
-  push @parameters, 'api_application', $self->{config}->api_application,
-    'api_key', $self->{config}->api_key, 'nonce', $nonce_string,
-    'request_time', $t, 'signature_method',
-    'HMAC-SHA1';
+  my @auth_parameters = (
+    'api_application='.$self->{config}->api_application,
+    'api_key='.$self->{config}->api_key,
+    'nonce='.$nonce_string,
+    'request_time='.$t,
+    'signature_method=HMAC-SHA1'
+  );
   if ($request_body) {
-    push @parameters, 'request', uri_escape($request_body);
+    push @parameters, 'request='.uri_escape($request_body);
   }
   if ($additional and ('HASH' eq ref $additional)) {
     foreach (my ($k, $v) = each %{$additional}) {
-      push @parameters, $k, $v;
+      push @parameters, "$k=$v";
     }
   }
-  my %p_hash = @parameters;
-  @parameters = map {"$_=$p_hash{$_}"} keys %p_hash;
 
-  my $parameter_string = join '&', sort { lc($a) cmp lc($b) } @parameters;
+  my $parameter_string = join '&', sort { lc($a) cmp lc($b) } (@parameters, @auth_parameters);
   $parameter_string = uri_escape($parameter_string);
   if ($request_body) {
     # The % in the %20 that the earlier uri_escape escaped spaces as is
@@ -579,8 +584,8 @@ sub _authentication_header {
   my $digest = encode_base64($hmac->digest, "");
   return $digest if ($return eq "authorisation_string");
 
-  push @parameters, "authorisation=$digest";
-  my $authentication_request = join ',', @parameters;
+  push @auth_parameters, "authorisation=$digest";
+  my $authentication_request = join ',', @auth_parameters;
 
   return $authentication_request;
 }
