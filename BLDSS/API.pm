@@ -556,7 +556,7 @@ sub _authentication_header {
   # We get at the parameters this way, rather than ->query_form
   # because the latter escapes the parameters in an undesirable way
   # we need the escaping to be consistent with the URL
-  my $query = $uri->query;
+  my $query = $uri->query // "";
   my @parameters = split('&', $query);
 
   my @auth_parameters = (
