@@ -570,7 +570,7 @@ sub _authentication_header {
     push @parameters, 'request='.uri_escape($request_body);
   }
   if ($additional and ('HASH' eq ref $additional)) {
-    foreach (my ($k, $v) = each %{$additional}) {
+    while (my ($k, $v) = each %{$additional}) {
       push @parameters, "$k=$v";
     }
   }
