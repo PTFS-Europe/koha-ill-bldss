@@ -223,7 +223,10 @@ sub capabilities {
     my $capabilities = {
 
         # The unmediated operation is just invoking confirm for BLDSS.
-        unmediated_ill => sub { $self->unmediated_confirm(@_); }
+        unmediated_ill => sub { $self->unmediated_confirm(@_); },
+        
+        # Migrate
+        migrate => sub { $self->migrate(@_); }
     };
     return $capabilities->{$name};
 }
@@ -806,7 +809,10 @@ sub migrate {
 
     # Cleanup any outstanding work and close the request.
     elsif ( $stage eq 'emigrate' ) {
-        my $request = $params->{request};
+        my $new_request = $params->{request};
+        my $from_id = $new_request->illrequestattributes->find(
+            { type => 'migrated_from' } )->value;
+        my $request     = Koha::Illrequests->find($from_id);
 
         # Cancel the original request if required
         if ( $request->status eq 'REQ' ) {
