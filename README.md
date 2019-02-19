@@ -8,7 +8,7 @@ This backend provides the ability to create Interlibrary Loan requests using the
 The version of the backend you require depends on the version of Koha you are using:
 * 17.11 - Use the 17.11 branch if you are using this version of Koha
 * 18.05 - Use the 18.05 branch if you are using this version of Koha
-* master - We recommend against using this branch as it contains additions that are tied to pending bugs in Koha and, as such, will not work with any released version of Koha
+* master - This branch currently works against Koha 18.11 and higher
 
 ## Installing
 
