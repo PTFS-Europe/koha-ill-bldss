@@ -225,6 +225,8 @@ sub approvals {
 }
 
 sub customer_preferences {
+  #### DEPRECATE: 99% certain this sub is not used
+  warn('**DEPRECATED**: BLDSS::API::customer_preferences in use');
   my $self = shift;
 
   my $url_string = $self->{config}->api_url . '/api/customer';
@@ -272,6 +274,8 @@ sub order {
 }
 
 sub orders {
+  #### DEPRECATE: 99% certain this sub is not used
+  warn('**DEPRECATED**: BLDSS::API::orders in use');
   my ($self, $selection) = @_;
 
   # return multiple orders based on criteria in selection
@@ -317,6 +321,8 @@ sub orders {
 }
 
 sub renew_loan {
+  #### DEPRECATE: 99% certain this sub is not used
+  warn('**DEPRECATED**: BLDSS::API::renew_loan in use');
   my ($self, $orderline, $requestor) = @_;
   my $url_string = $self->{config}->api_url . '/api/orders/renewLoan';
   my $url        = URI->new($url_string);
@@ -337,6 +343,8 @@ sub renew_loan {
 }
 
 sub reportProblem {
+  #### DEPRECATE: 99% certain this sub is not used
+  warn('**DEPRECATED**: BLDSS::API::reportProblem in use');
   my ($self, $param) = @_;
   my $url_string = $self->{config}->api_url . '/api/orders/renewLoan';
   my $url        = URI->new($url_string);
@@ -400,6 +408,8 @@ sub reference {
 }
 
 sub rejected_requests {
+  #### DEPRECATE: 99% certain this sub is not used
+  warn('**DEPRECATED**: BLDSS::API::rejected_requests in use');
   my ($self, $options) = @_;
   my $url_string = $self->{config}->api_url . '/api/reference/rejectedRequests';
   my $url        = URI->new($url_string);
