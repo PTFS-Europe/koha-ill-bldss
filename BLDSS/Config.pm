@@ -183,34 +183,45 @@ sub getDigitalRecipients {
 }
 
 
-=head3 getCredentials
+=head3 setCredentials
 
-    my $credentials = $config->getCredentials($branchCode);
+    my $credentials = $config->setCredentials($branchCode);
 
-Fetch the best-fit credentials: if we have credentials for $branchCode, use
-those; otherwise fall back on default credentials.  If neither can be found,
-simply populate application details, and populate key details with 0.
+Establish the best-fit credentials: if we have credentials for $branchCode, use
+those and set our instance properties accordingly
 
 =cut
 
-sub getCredentials {
+sub setCredentials {
   my ($self, $branchCode) = @_;
-  my $creds = $self->{configuration}->{credentials}
-    || die "We have no credentials defined.  Please check koha-conf.xml.";
 
-  my $exact = {api_key => 0, api_auth => 0};
-  if ($branchCode && $creds->{api_keys}->{$branchCode}) {
-    $exact = $creds->{api_keys}->{$branchCode};
+  # First we need to find the config for the branch we may have been passed
+  if ($branchCode) {
+    my $branches = (ref $self->{config}->{branch} eq 'ARRAY') ?
+        $self->{config}->{branch} :
+        [ $self->{config}->{branch} ];
+    # Check we have a config for the branch we were passed and, if so,
+    # grab it
+    my $target;
+    foreach my $branch(@{$branches}) {
+        if ($branch->{code} eq $branchCode) {
+            $target = $branch;
+            last;
+        }
+    }
+    # If we found a branch and it contains credentials
+    if (
+        $target &&
+        $target->{api_key} &&
+        $target->{api_key_auth}
+    ) {
+        $self->{api_key}      = $target->{api_key};
+        $self->{api_key_auth} = $target->{api_key_auth};
+    }
   }
-  elsif ($creds->{api_keys}->{default}) {
-    $exact = $creds->{api_keys}->{default};
-  }
-
   return {
-    api_key              => $exact->{api_key},
-    api_key_auth         => $exact->{api_auth},
-    api_application      => $creds->{api_application}->{key},
-    api_application_auth => $creds->{api_application}->{auth},
+      api_key      => $self->{api_key},
+      api_key_auth => $self->{api_key_auth}
   };
 }
 

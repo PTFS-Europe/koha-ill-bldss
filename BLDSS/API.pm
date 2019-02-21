@@ -57,6 +57,12 @@ sub new {
   return $self;
 }
 
+sub branchcode {
+    my ($self, $code) = @_;
+    $self->{branchcode} = $code if $code;
+    return $self->{branchcode};
+}
+
 sub search {
   my ($self, $search_str, $opt) = @_;
 
@@ -154,7 +160,8 @@ sub match {
 }
 
 sub availability {
-  my ($self, $uin, $opt) = @_;
+  my ($self, $uin, $opt, $request) = @_;
+  $self->branchcode($request->branchcode);
   my @param = ('AvailabilityRequest.uin', $uin);
   if ($opt) {
     if ($opt->{includeprices}) {
@@ -226,7 +233,9 @@ sub customer_preferences {
 }
 
 sub cancel_order {
-  my ($self, $orderline_ref) = @_;
+  my ($self, $request) = @_;
+  $self->branchcode($request->branchcode);
+  my $orderline_ref = $request->orderid;
   my $url_string = $self->{config}->api_url . "/api/orders/$orderline_ref";
   my $url        = URI->new($url_string);
   my $additional = {id => $orderline_ref};
@@ -236,9 +245,10 @@ sub cancel_order {
 }
 
 sub create_order {
-  my ($self, $order_ref) = @_;
+  my ($self, $details, $request) = @_;
+  $self->branchcode($request->branchcode);
   my $outside_uk  = $self->{config}->{is_outside_uk};
-  my $xml        = _encode_order($order_ref, $outside_uk);
+  my $xml        = _encode_order($details, $outside_uk);
   my $url_string = $self->{config}->api_url . '/api/orders';
   my $url        = URI->new($url_string);
   return $self->_request(
@@ -246,7 +256,11 @@ sub create_order {
 }
 
 sub order {
-  my ($self, $order_ref) = @_;
+  my ($self, $request) = @_;
+
+  $self->branchcode($request->branchcode);
+
+  my $order_ref = $request->orderid;
 
   my $query_vals = ['id', $order_ref];
 
@@ -346,7 +360,8 @@ sub reportProblem {
 }
 
 sub prices {
-  my ($self, $param) = @_;
+  my ($self, $param, $request) = @_;
+  $self->branchcode($request->branchcode);
   my $url_string = $self->{config}->api_url . '/api/prices';
   my $url        = URI->new($url_string);
   my @optional_param;
@@ -438,13 +453,19 @@ sub _request {
 
   my $req = HTTP::Request->new($method => $url);
 
+  # Set our credentials according to the branch of the request
+  # (if set)
+  if ($self->branchcode) {
+    $self->{config}->setCredentials($self->branchcode);
+  }
+
   # If auth add as header
   if ($auth) {
     my $authentication_request = $self->_authentication_header({
       method       => $method,
       uri          => $url,
       request_body => $content,
-      additional   => $additional,
+      additional   => $additional
     });
     $req->header('BLDSS-API-Authentication' => $authentication_request);
   }

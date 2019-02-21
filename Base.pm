@@ -819,7 +819,7 @@ sub migrate {
 
             # FIXME: Add Error Handling Here
             $self->_process(
-                $self->_api->cancel_order( $params->{request}->orderid ) );
+                $self->_api->cancel_order( $params->{request} ) );
         }
 
         # Update original request to cancelled
@@ -850,7 +850,7 @@ sub cancel {
     my ( $self, $params ) = @_;
     my $response =
       $self->_process(
-        $self->_api->cancel_order( $params->{request}->orderid ) );
+        $self->_api->cancel_order( $params->{request} ) );
     if ( $response->{error} ) {
         $response->{method} = 'cancel';
         $response->{stage}  = 'init';
@@ -872,7 +872,7 @@ sub status {
     my $stage = $params->{other}->{stage};
     if ( !$stage || $stage eq 'init' ) {
         my $status =
-          $self->_process( $self->_api->order( $params->{request}->orderid ) );
+          $self->_process( $self->_api->order( $params->{request} ) );
         $status->{method} = "status";
         $status->{stage}  = "show_status";
 
@@ -1421,7 +1421,7 @@ sub availability {
         } ( $fieldResults->as_list )
     };
 
-    my $result = $self->_process( $self->_api->availability( $uin, $opt ) );
+    my $result = $self->_process( $self->_api->availability( $uin, $opt, $request ) );
     $response = { %{$response}, %{$result} };
     return $response if ( $response->{error} );
 
@@ -1617,7 +1617,11 @@ sub create_order {
         payCopyright      => $self->getPayCopyright($branch),
     };
 
-    my $response = $self->_process( $self->_api->create_order($final_details) );
+    my $response = $self->_process( $self->_api->create_order(
+            $final_details,
+            $request
+        )
+    );
     if ( $response->{error} ) {
         return {
             error   => 1,
@@ -1683,7 +1687,9 @@ sub validate_available {
         } ( $fieldResults->as_list )
     };
 
-    my $response = $self->_process( $self->_api->availability( $uin, $opt ) );
+    my $response = $self->_process(
+        $self->_api->availability($uin, $opt, $request)
+    );
 
     return 0 if ( $response->{error} );
 
@@ -1736,7 +1742,9 @@ sub prices {
     my $quality = $params->{other}->{'quality'};
     my $coordinates =
       { format => $format, speed => $speed, quality => $quality, };
-    my $response = $self->_process( $self->_api->prices );
+    my $response = $self->_process(
+        $self->_api->prices(undef, $params->{request})
+    );
     return $response if ( $response->{error} );
     my $result   = $response->{value}->result;
     my $price    = 0;
