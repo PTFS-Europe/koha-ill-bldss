@@ -113,7 +113,7 @@
   <thead>
     <tr>
     [% FOREACH field IN whole.value.0 %]
-      [% IF field.value.inSummary %]<th id=[% field.key %]>[% field.value.name %]</th>[% END %]
+      [% IF field.value.inSummary %]<th class="[% field.key.replace('[^a-zA-Z\d]','_') %]">[% field.value.name %]</th>[% END %]
     [% END %]
     </tr>
   </thead>
@@ -138,7 +138,7 @@
       [% url = url _ "&amp;uin=" _ value %]
         <a href="[% url %]">Request [% value %]</a>
       [% ELSE %]
-        <td>
+        <td class="[% field.key.replace('[^a-zA-Z\d]','_') %]">
         [% value %]
       [% END %]
       </td>
@@ -317,5 +317,16 @@
     <a class="cancel" href="/cgi-bin/koha/opac-illrequests.pl">Cancel</a>
   </fieldset>
 </form>
+
+[% INCLUDE 'datatables.inc' %]
+[% BLOCK backend_jsinclude %]
+<script>
+    //<![CDATA[
+        $("#ill-opac-results").dataTable($.extend(true, {}, dataTablesDefaults, {
+            "deferRender": true
+        }));
+    //]]>
+</script>
+[% END %]
 
 [% END %]
