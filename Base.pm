@@ -879,20 +879,38 @@ sub status {
         # Log this check if appropriate
         if ( $self->_logger ) {
             my $logger = $self->_logger;
-            $logger->set_data(
-                {
+            # TODO: This is a transitionary measure, we have removed set_data
+            # in Bug 20750, so calls to it won't work. But since 20750 is
+            # currently only in master, they only won't work in master. So
+            # we're temporarily going to allow for both cases
+            if ($logger->can('set_data')) {
+                $logger->set_data(
+                    {
+                        actionname   => 'BLDSS_STATUS_CHECK',
+                        objectnumber => $params->{request}->id,
+                        infos        => to_json(
+                            {
+                                log_origin => $self->name,
+                                response =>
+                                    $status->{value}->result->orderline->overallStatus
+                            }
+                        )
+                    }
+                );
+                $logger->log_something();
+            } else {
+                $logger->log_something({
                     actionname   => 'BLDSS_STATUS_CHECK',
                     objectnumber => $params->{request}->id,
                     infos        => to_json(
                         {
                             log_origin => $self->name,
                             response =>
-                              $status->{value}->result->orderline->overallStatus
+                                $status->{value}->result->orderline->overallStatus
                         }
                     )
-                }
-            );
-            $logger->log_something();
+                });
+            }
         }
 
         return $status;
