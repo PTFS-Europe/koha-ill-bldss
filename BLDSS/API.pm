@@ -657,7 +657,7 @@ sub _encode_order {
 
   # Optional Parameters
   for my $name (
-    qw( requestor customerReference payCopyright allowWaitingList referrel))
+    qw( requestor customerReference allowWaitingList referrel))
   {
     if ($ref->{$name}) {
       $element = $doc->createElement($name);
