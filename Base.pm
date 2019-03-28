@@ -1916,12 +1916,12 @@ sub _search {
 
     my $result_count = @return;
     my $current_pos  = $opts->{start_rec};
-    my $next_pos     = $current_pos + $result_count;
+    my $next_pos     = $current_pos + $opts->{max_results};
     my $next =
       ( $result_count == $opts->{max_results} )
       ? $nav_qry . "&start_rec=" . $next_pos
       : undef;
-    my $prev_pos = $current_pos - $result_count;
+    my $prev_pos = $current_pos - $opts->{max_results};
     my $previous =
       ( $prev_pos >= 1 ) ? $nav_qry . "&start_rec=" . $prev_pos : undef;
     $response->{next}     = $next;
