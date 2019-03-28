@@ -138,12 +138,12 @@
     </table>
     <p>
       [% IF whole.previous %]
-      <a class="nav" title="Previous set of results" href=[% here _ whole.previous %]>&lsaquo;&lsaquo; Previous</a>
+      <a class="nav" title="Previous set of results" href=[% here _ whole.previous | url %]>&lsaquo;&lsaquo; Previous</a>
       [% ELSE %]
       <span> &lsaquo;&lsaquo; Previous</span>
       [% END %]
       [% IF whole.next %]
-      <a class="nav" title="Next set of results" href=[% here _ whole.next %]>Next &rsaquo;&rsaquo;</a>
+      <a class="nav" title="Next set of results" href=[% here _ whole.next | url %]>Next &rsaquo;&rsaquo;</a>
       [% ELSE %]
       <span>Next &rsaquo;&rsaquo;</span>
       [% END %]
