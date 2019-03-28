@@ -668,8 +668,6 @@ sub migrate {
         # Initiate immigration search
         if ( !$step || 'init' eq $step ) {
 
-            # FIXME: We do not current handle the 'amend search' option here
-
             # Fetch original request details
             my $original_request =
               Koha::Illrequests->find( $other->{illrequest_id} );

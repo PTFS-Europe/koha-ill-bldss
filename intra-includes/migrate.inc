@@ -78,24 +78,8 @@
   [% ELSIF whole.step == 'search_results' %]
     <h2>Search results</h2>
     [% IF whole.value.0 %]
-    <p role="alert" class="bg-info alert alert-success">
-      <span id="search-summary" class="pull-left">
-        [% whole.records %] Results of search for: &quot;[% whole.userstring %]&quot;
-        [% url = back _ "?method=migrate&amp;stage=immigrate&amp;step=init" %]
-        [% url = url _ "&amp;backend=" _ whole.backend %]
-        [% url = url _ "&amp;illrequest_id=" _ whole.params.other.illrequest_id %]
-        [% url = url _ "&amp;cardnumber=" _ whole.cardnumber %]
-        [% url = url _ "&amp;brw=" _ whole.borrowernumber %]
-        [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
-        [% url = url _ "&amp;query=" _ whole.params.other.query %]
-        [% url = url _ "&amp;issn=" _ whole.params.other.issn %]
-        [% url = url _ "&amp;isbn=" _ whole.params.other.isbn %]
-        [% url = url _ "&amp;title=" _ whole.params.other.title %]
-        [% url = url _ "&amp;author=" _ whole.params.other.author %]
-        [% url = url _ "&amp;type=" _ whole.params.other.type %]
-        [% url = url _ "&amp;ammend=1" %]
-      </span>
-      <a href="[% url | url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
+    <p role="alert" id="bldss-search-summary" class="bg-info alert alert-success">
+        [% whole.records %] results of search for: &quot;[% whole.userstring %]&quot;
     </p>
     <table class="table table-bordered table-striped">
       <thead>
@@ -149,23 +133,8 @@
       [% END %]
     </p>
     [% ELSE %]
-    <p role="alert" class="bg-info alert alert-danger">
-      <span id="search-summary" class="pull-left">
+    <p role="alert" id="bldss-search-summary" class="bg-info alert alert-danger">
       No results found for: &quot;[% whole.userstring %]&quot;
-      [% url = back _ "?method=migrate&amp;stage=immigrate&amp;step=init" %]
-      [% url = url _ "&amp;backend=" _ whole.backend %]
-      [% url = url _ "&amp;illrequest_id=" _ whole.params.other.illrequest_id %]
-      [% url = url _ "&amp;cardnumber=" _ whole.cardnumber %]
-      [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
-      [% url = url _ "&amp;query=" _ whole.params.other.query %]
-      [% url = url _ "&amp;issn=" _ whole.params.other.issn %]
-      [% url = url _ "&amp;isbn=" _ whole.params.other.isbn %]
-      [% url = url _ "&amp;title=" _ whole.params.other.title %]
-      [% url = url _ "&amp;author=" _ whole.params.other.author %]
-      [% url = url _ "&amp;type=" _ whole.params.other.type %]
-      [% url = url _ "&amp;ammend=1" %]
-      </span>
-      <a href="[% url | url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
     </p>
     [% END %]
 
