@@ -1861,7 +1861,7 @@ sub _search {
 
     # Collect parameters
     my $opts = { map { $_ => $other->{$_} }
-          qw/ author isbn issn title type max_results start_rec / };
+          qw/ author isbn issn title type max_results start_rec illrequest_id / };
     $opts->{max_results} = 10 unless $opts->{max_results};
     $opts->{start_rec}   = 1  unless $opts->{start_rec};
 
