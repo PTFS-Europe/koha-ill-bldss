@@ -1,7 +1,7 @@
 <h2>Request British Library status</h2>
 [% request_url = "/cgi-bin/koha/ill/ill-requests.pl?method=status&amp;" %]
 [% request_url = request_url _ "stage=commit&amp;illrequest_id=" _ request.illrequest_id %]
-<p><a href="[% request_url %]" title="Return to request.">Return to ILL request.</a></p>
+<p><a href="[% request_url | url %]" title="Return to request.">Return to ILL request.</a></p>
 [% orderDetails = whole.value.result.orderline %]
 <h3>Delivery details</h3>
 [% delDetails = orderDetails.deliveryDetails %]

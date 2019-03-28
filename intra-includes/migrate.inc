@@ -71,7 +71,7 @@
       </fieldset>
       <fieldset class="action">
         <input type="submit" value="Search"/>
-        <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl?method=illview&illrequest_id=[% whole.value.other.illrequest_id %]">Cancel</a>
+        <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl?method=illview&illrequest_id=[% whole.value.other.illrequest_id | url %]">Cancel</a>
       </fieldset>
     </form>
 
@@ -95,7 +95,7 @@
         [% url = url _ "&amp;type=" _ whole.params.other.type %]
         [% url = url _ "&amp;ammend=1" %]
       </span>
-      <a href="[% url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
+      <a href="[% url | url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
     </p>
     <table class="table table-bordered table-striped">
       <thead>
@@ -125,7 +125,7 @@
           [% url = url _ "&amp;author=" _ whole.params.other.author %]
           [% url = url _ "&amp;type=" _ whole.params.other.type %]
           [% url = url _ "&amp;uin=" _ value %]
-            <a href="[% url %]">Request [% value %]</a>
+            <a href="[% url | url %]">Request [% value %]</a>
           [% ELSE %]
             [% value %]
           [% END %]
@@ -165,7 +165,7 @@
       [% url = url _ "&amp;type=" _ whole.params.other.type %]
       [% url = url _ "&amp;ammend=1" %]
       </span>
-      <a href="[% url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
+      <a href="[% url | url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
     </p>
     [% END %]
 
@@ -322,7 +322,7 @@
       </fieldset>
       <fieldset class="action">
         <input type="submit" value="Request"/>
-        <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl?method=illview&illrequest_id=[% whole.value.other.illrequest_id %]">Cancel</a>
+        <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl?method=illview&illrequest_id=[% whole.value.other.illrequest_id | url %]">Cancel</a>
       </fieldset>
     </form>
   [% END %]

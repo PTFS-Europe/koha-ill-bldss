@@ -154,7 +154,7 @@
     [% url = url _ "&amp;author=" _ whole.params.other.author %]
     [% url = url _ "&amp;type=" _ whole.params.other.type %]
   </span>
-  <a href="[% url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
+  <a href="[% url | url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
 </p>
 <table class="table table-bordered table-striped">
   <thead>
@@ -183,7 +183,7 @@
       [% url = url _ "&amp;author=" _ whole.params.other.author %]
       [% url = url _ "&amp;type=" _ whole.params.other.type %]
       [% url = url _ "&amp;uin=" _ value %]
-        <a href="[% url %]">Request [% value %]</a>
+        <a href="[% url | url %]">Request [% value %]</a>
       [% ELSE %]
         [% value %]
       [% END %]
@@ -196,12 +196,12 @@
 </table>
 <p>
   [% IF whole.previous %]
-  <a class="nav" title="Previous set of results" href=[% here _ whole.previous %]>&lsaquo;&lsaquo; Previous</a>
+  <a class="nav" title="Previous set of results" href=[% here _ whole.previous | url %]>&lsaquo;&lsaquo; Previous</a>
   [% ELSE %]
   <span> &lsaquo;&lsaquo; Previous</span>
   [% END %]
   [% IF whole.next %]
-  <a class="nav" title="Next set of results" href=[% here _ whole.next %]>Next &rsaquo;&rsaquo;</a>
+  <a class="nav" title="Next set of results" href=[% here _ whole.next | url %]>Next &rsaquo;&rsaquo;</a>
   [% ELSE %]
   <span>Next &rsaquo;&rsaquo;</span>
   [% END %]
@@ -221,7 +221,7 @@
   [% url = url _ "&amp;author=" _ whole.params.other.author %]
   [% url = url _ "&amp;type=" _ whole.params.other.type %]
   </span>
-  <a href="[% url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
+  <a href="[% url | url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
 </p>
 [% END %]
 

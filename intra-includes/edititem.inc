@@ -152,6 +152,6 @@
   </fieldset>
   <fieldset class="action">
     <input type="submit" value="Save"/>
-    <a class="cancel" href="?method=illview&illrequest_id=[% whole.illrequest_id %]">Cancel</a>
+    <a class="cancel" href="?method=illview&illrequest_id=[% whole.illrequest_id | url %]">Cancel</a>
   </fieldset>
 </form>

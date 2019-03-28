@@ -80,7 +80,7 @@
     Deleted borrower
     [% ELSE %]
     [% brw = field.value.1 %]
-    <a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% brw.borrowernumber %]"
+    <a href="/cgi-bin/koha/members/moremember.pl?borrowernumber=[% brw.borrowernumber | url %]"
     title="View borrower details">
       [% brw.firstname _ " " _ brw.surname _ ", " _ brw.cardnumber %]
     </a>
@@ -98,7 +98,7 @@
   [% END %]
   [% END %]
 </ol>
-<p><a href=[% forward %] title="View all requests">View requests.</a></p>
+<p><a href=[% forward | url %] title="View all requests">View requests.</a></p>
 [% ELSE %]
 <h3>Unknown Stage of Confirm method</h3>
 [% END %]
