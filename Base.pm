@@ -781,6 +781,16 @@ sub migrate {
             # Add temporary bib record
             my $biblionumber = $self->bldss2biblio($bldss_result);
 
+            # Cancel the original order if required
+            if ( $request->status eq 'REQ') {
+                $self->_process(
+                    $self->_api->cancel_order( $params->{request} )
+                );
+            }
+
+            # The orderid is no longer applicable
+            $request->orderid(undef);
+
             # Store request
             $request->status('NEW');
             $request->backend( $self->name );
