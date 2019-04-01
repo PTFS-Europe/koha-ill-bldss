@@ -85,8 +85,12 @@ sub new {
     $self->_api($api);
     $self->_key_map;
     $self->_logger( $params->{logger} ) if ( $params->{logger} );
-    $self->{templates} = { 'BLDSS_STATUS_CHECK' => dirname(__FILE__)
-          . '/intra-includes/log/bldss_status_check.tt' };
+    $self->{templates} = {
+        'BLDSS_STATUS_CHECK' => dirname(__FILE__)
+            . '/intra-includes/log/bldss_status_check.tt',
+        'BLDSS_MIGRATE_IN'   => dirname(__FILE__)
+            . '/intra-includes/log/bldss_migrate_in.tt'
+    };
     return $self;
 }
 
@@ -741,6 +745,10 @@ sub migrate {
             # Merge original request details as required
             my $request =
               Koha::Illrequests->find( $other->{illrequest_id} );
+
+            # Record where we're migrating from, so we can log that
+            my $migrating_from = $request->backend;
+
             my @interesting_fields =
               (qw/title article_author article_title title author edition year pages/);
             my $original_attributes = {
@@ -812,6 +820,31 @@ sub migrate {
             # since it's being surpassed by the destination's metadata
             $self->delete_illrequestattributes( $request );
             $self->create_illrequestattributes( $merged, $request );
+
+            # Log that the migration too place
+            if ( $self->_logger ) {
+                my $logger = $self->_logger;
+                # TODO: This is a transitionary measure, we have removed set_data
+                # in Bug 20750, so calls to it won't work. But since 20750 is
+                # currently only in master, they only won't work in master. So
+                # we're temporarily going to allow for both cases
+                my $payload = {
+                    modulename   => 'ILL',
+                    actionname   => 'BLDSS_MIGRATE_IN',
+                    objectnumber => $request->id,
+                    infos        => to_json({
+                        log_origin    => $self->name,
+                        migrated_from => $migrating_from,
+                        migrated_to   => $self->name
+                    })
+                };
+                if ($logger->can('set_data')) {
+                    $logger->set_data($payload);
+                    $logger->log_something();
+                } else {
+                    $logger->log_something($payload);
+                }
+            }
 
             return {
                 error   => 0,
