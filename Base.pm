@@ -481,7 +481,8 @@ sub create {
         # to add further details to turn it into a chapter or issue request.
         if ( $bldss_result->{'./type'}->{value} =~ /book|journal|newspaper/ ) {
 
-            # Augment bldss_result with submitted details
+            # Augment bldss_result with submitted metadata, but only if
+            # the BL response doesn't contain that bit of metadata
             if ( $other->{complete} ) {
                 foreach my $key ( keys %{ $self->{key_map} } ) {
                     my $value = $self->{key_map}->{$key};
@@ -535,12 +536,17 @@ sub create {
         $request->updated( DateTime->now );
         $request->store;
 
-        # Store the request attributes
-        $self->create_illrequestattributes( $bldss_result, $request,
-            \@read_write );
-
-        # Add original query details to result for storage
-        $self->_store_search( $request, $bldss_result, $other );
+        # Normalise BLDSS result for storage
+        my $search_normalized = $self->_normalize_bldss_result(
+            $request,
+            $bldss_result,
+            $other
+        );
+        # Preserve the un-normalized result metadata.
+        # TODO: Look at why we use the un-normalized metadata everywhere,
+        # rather than normalize it when it first comes in then use that
+        my $merged = { %$bldss_result, %$search_normalized };
+        $self->create_illrequestattributes( $merged, $request, \@read_write );
 
         # Return
         return {
@@ -675,33 +681,32 @@ sub migrate {
         # Initiate immigration search
         if ( !$step || 'init' eq $step ) {
 
-            # Fetch original request details
-            my $original_request =
-              Koha::Illrequests->find( $other->{illrequest_id} );
+            # Fetch request details
+            my $request = Koha::Illrequests->find( $other->{illrequest_id} );
 
             # Collect parameters
             $other->{step}              = 'search_results';
             $response->{step}           = 'search_results';
             $response->{query}          = $other->{query};
             $response->{params}         = $params;
-            $other->{borrowernumber}    = $original_request->borrowernumber;
-            $response->{borrowernumber} = $original_request->borrowernumber;
-            $other->{cardnumber}        = $original_request->patron->cardnumber;
-            $response->{cardnumber}     = $original_request->patron->cardnumber;
-            $other->{branchcode}        = $original_request->branchcode;
-            $response->{branchcode}     = $original_request->branchcode;
+            $other->{borrowernumber}    = $request->borrowernumber;
+            $response->{borrowernumber} = $request->borrowernumber;
+            $other->{cardnumber}        = $request->patron->cardnumber;
+            $response->{cardnumber}     = $request->patron->cardnumber;
+            $other->{branchcode}        = $request->branchcode;
+            $response->{branchcode}     = $request->branchcode;
 
             # Initiate search with details from last request
             my @recognised_attributes = (qw/isbn issn title author srchany/);
             my $original_attributes =
-              $original_request->illrequestattributes->search(
+              $request->illrequestattributes->search(
                 { type => { '-in' => \@recognised_attributes } } );
             my $search_attributes =
               { map { $_->type => $_->value }
                   ( $original_attributes->as_list ) };
             $params->{other} = { %{ $params->{other} }, %{$search_attributes} };
             if (
-                my $query = $original_request->illrequestattributes->find(
+                my $query = $request->illrequestattributes->find(
                     { type => 'srchany' }
                 )
               )
@@ -731,18 +736,16 @@ sub migrate {
 
         # Create request from search results
         elsif ( 'commit' eq $step ) {
-            my $request = $params->{request};
-
             my $bldss_result = $self->_find( $other->{uin} );
 
             # Merge original request details as required
-            my $original_request =
+            my $request =
               Koha::Illrequests->find( $other->{illrequest_id} );
             my @interesting_fields =
               (qw/title article_author article_title title author edition year pages/);
             my $original_attributes = {
                 map { $_->type => $_->value } (
-                    $original_request->illrequestattributes->search(
+                    $request->illrequestattributes->search(
                         { type => { '-in' => \@interesting_fields } }
                     )->as_list
                 )
@@ -751,17 +754,17 @@ sub migrate {
 
                 # itemLevel
                 $bldss_result->{'./metadata/itemLevel/year'} //=
-                  $original_request->{year}
-                  if exists $original_request->{year};
+                  $request->{year}
+                  if exists $request->{year};
                 $bldss_result->{'./metadata/itemLevel/volume'} //=
-                  $original_request->{volume}
-                  if exists $original_request->{volume};
+                  $request->{volume}
+                  if exists $request->{volume};
                 $bldss_result->{'./metadata/itemLevel/issue'} //=
-                  $original_request->{issue}
-                  if exists $original_request->{issue};
+                  $request->{issue}
+                  if exists $request->{issue};
                 $bldss_result->{'./metadata/itemLevel/edition'} //=
-                  $original_request->{edition}
-                  if exists $original_request->{edition};
+                  $request->{edition}
+                  if exists $request->{edition};
 
                 # itemOfInterestLevel
                 $bldss_result->{'./metadata/itemOfInterestLevel/title'} //=
@@ -779,21 +782,26 @@ sub migrate {
             my $biblionumber = $self->bldss2biblio($bldss_result);
 
             # Store request
-            $request->borrowernumber( $other->{borrowernumber} );
-            $request->branchcode( $other->{branchcode} );
             $request->status('NEW');
             $request->backend( $self->name );
-            $request->placed( DateTime->now );
             $request->updated( DateTime->now );
             $request->biblio_id($biblionumber);
             $request->store;
 
-            # ...Add original query details to result for storage
-            $self->_store_search( $request, $bldss_result, $other );
-
-            # Store the request attributes
-            $bldss_result->{migrated_from}->{value} = $other->{illrequest_id};
-            $self->create_illrequestattributes( $bldss_result, $request );
+            # Normalise BLDSS result for storage
+            my $search_normalized = $self->_normalize_bldss_result(
+                $request,
+                $bldss_result,
+                $other
+            );
+            # Preserve the un-normalized result metadata.
+            # TODO: Look at why we use the un-normalized metadata everywhere,
+            # rather than normalize it when it first comes in then use that
+            my $merged = { %$bldss_result, %$search_normalized };
+            # Remove any pre-existing metdata for this request,
+            # since it's being surpassed by the destination's metadata
+            $self->delete_illrequestattributes( $request );
+            $self->create_illrequestattributes( $merged, $request );
 
             return {
                 error   => 0,
@@ -801,7 +809,6 @@ sub migrate {
                 message => '',
                 method  => 'migrate',
                 stage   => 'commit',
-                next    => 'emigrate',
                 value   => $params,
             };
         }
@@ -810,36 +817,6 @@ sub migrate {
         else {
             die "Immigate Unexpected Step";
         }
-    }
-
-    # Cleanup any outstanding work and close the request.
-    elsif ( $stage eq 'emigrate' ) {
-        my $new_request = $params->{request};
-        my $from_id = $new_request->illrequestattributes->find(
-            { type => 'migrated_from' } )->value;
-        my $request     = Koha::Illrequests->find($from_id);
-
-        # Cancel the original request if required
-        if ( $request->status eq 'REQ' ) {
-
-            # FIXME: Add Error Handling Here
-            $self->_process(
-                $self->_api->cancel_order( $params->{request} ) );
-        }
-
-        # Update original request to cancelled
-        $request->status("REQREV");
-        $request->orderid(undef);
-        $request->store;
-
-        return {
-            error   => 0,
-            status  => '',
-            message => '',
-            method  => 'migrate',
-            stage   => 'commit',
-            value   => $params,
-        };
     }
 }
 
@@ -1021,16 +998,16 @@ sub _set_suppression {
     return 1;
 }
 
-=head3 _store_search
+=head3 _normalize_bldss_result
 
-  $self->_store_search($request, $result, $params);
+  $self->_normalize_bldss_result($request, $result, $params);
 
 Given the request object, result and params hashrefs, collate and store the 
 share search attributes for possible migrations.
 
 =cut
 
-sub _store_search {
+sub _normalize_bldss_result {
     my ( $self, $request, $result, $params ) = @_;
 
     # Standard Fields
@@ -1157,10 +1134,8 @@ sub _store_search {
     $search_attributes->{'srchany'} = $params->{query}
       if defined( $params->{query} );
 
-    # Store the request attributes
-    $self->create_illrequestattributes( $search_attributes, $request );
+    return $search_attributes;
 
-    return 1;
 }
 
 sub create_illrequestattributes {
@@ -1205,6 +1180,14 @@ sub create_illrequestattributes {
         }
     }
     return 1;
+}
+
+sub delete_illrequestattributes {
+    my ( $self, $request ) = @_;
+
+    Koha::Illrequestattributes->search({
+        illrequest_id => $request->illrequest_id
+    })->delete;
 }
 
 sub validate_delivery_input {
