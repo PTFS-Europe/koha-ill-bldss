@@ -207,7 +207,7 @@ sub status_graph {
             name           => 'Switched provider',
             ui_method_name => 'Switch provider',
             method         => 'migrate',
-            next_actions   => [],
+            next_actions   => [ 'REQ', 'GENREQ', 'KILL', 'MIG' ],
             ui_method_icon => 'fa-search',
         },
     };
@@ -800,7 +800,7 @@ sub migrate {
             }
 
             # Store request
-            $request->status('NEW');
+            $request->status('MIG');
             $request->backend( $self->name );
             $request->updated( DateTime->now );
             $request->biblio_id($biblionumber);
