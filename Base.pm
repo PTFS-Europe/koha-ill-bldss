@@ -852,7 +852,8 @@ sub migrate {
                 message => '',
                 method  => 'migrate',
                 stage   => 'commit',
-                value   => $params,
+                next    => 'illview',
+                value   => $params
             };
         }
 
