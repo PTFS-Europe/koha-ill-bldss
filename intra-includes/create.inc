@@ -1,3 +1,10 @@
+<style>
+    #interlibraryloans #search-summary {
+        left: 15px;
+        max-width: 70%;
+    }
+</style>
+
 [% IF whole.error %]
   [% IF whole.status == 'missing_fields' %]
     <p><em>Please Note:</em> Some mandatory fields are missing.</p>
