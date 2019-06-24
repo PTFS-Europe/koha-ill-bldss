@@ -15,6 +15,7 @@ The version of the backend you require depends on the version of Koha you are us
 * Create a directory in `Koha` called `Illbackends`, so you will end up with `Koha/Illbackends`
 * Clone the repository into this directory, so you will end up with `Koha/Illbackends/koha-ill-bldss`
 * In the `koha-ill-bldss` directory switch to the branch you wish to use
+* Rename the `koha-ill-bldss` directory to `BLDSS`
 * Activate ILL by enabling the `ILLModule` system preference
 
 ## Configuration
