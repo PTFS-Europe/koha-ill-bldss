@@ -226,7 +226,7 @@ sub capabilities {
         unmediated_ill => sub { $self->unmediated_confirm(@_); },
         
         # Migrate
-        migrate => sub { $self->migrate(@_); }
+        migrate => sub { $self->migrate(@_); },
 
         # Return whether we are ready to display availability
         should_display_availability => sub {
