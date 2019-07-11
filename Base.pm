@@ -228,11 +228,6 @@ sub capabilities {
         # Migrate
         migrate => sub { $self->migrate(@_); },
 
-        # Return whether we are ready to display availability
-        should_display_availability => sub {
-            my ($params) = @_;
-            return $params->{'stage'} eq 'commit' ? 1 : 0
-        },
     };
     return $capabilities->{$name};
 }
