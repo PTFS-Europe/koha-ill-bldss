@@ -986,7 +986,8 @@ sub bldss2biblio {
 
     # We hardcode a framework name of 'ILL', which will need to exist
     # All this stuff should be configurable
-    my $biblionumber = AddBiblio( $record, $self->{framework} );
+    my ($biblionumber, $biblioitemnumber) =
+        AddBiblio( $record, $self->{framework} );
 
     return $biblionumber;
 }
