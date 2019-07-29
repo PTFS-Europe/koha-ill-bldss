@@ -733,7 +733,7 @@ sub migrate {
             my $original_request =
               Koha::Illrequests->find( $other->{illrequest_id} );
             my @interesting_fields =
-              (qw/title container_title author edition year pages/);
+              (qw/title article_author article_title title author edition year pages/);
             my $original_attributes = {
                 map { $_->type => $_->value } (
                     $original_request->illrequestattributes->search(
@@ -741,7 +741,7 @@ sub migrate {
                     )->as_list
                 )
             };
-            if ( exists $original_attributes->{'container_title'} ) {
+            if ( exists $original_attributes->{'article_title'} ) {
 
                 # itemLevel
                 $bldss_result->{'./metadata/itemLevel/year'} //=
@@ -759,11 +759,11 @@ sub migrate {
 
                 # itemOfInterestLevel
                 $bldss_result->{'./metadata/itemOfInterestLevel/title'} //=
-                  $original_attributes->{title}
-                  if exists $original_attributes->{title};
+                  $original_attributes->{article_title}
+                  if exists $original_attributes->{article_title};
                 $bldss_result->{'./metadata/itemOfInterestLevel/author'} //=
-                  $original_attributes->{author}
-                  if exists $original_attributes->{author};
+                  $original_attributes->{article_author}
+                  if exists $original_attributes->{article_author};
                 $bldss_result->{'./metadata/itemOfInterestLevel/pages'} //=
                   $original_attributes->{pages}
                   if exists $original_attributes->{pages};
@@ -1035,7 +1035,6 @@ sub _store_search {
     # * volume
 
     # * pages
-    # * container_title
 
     my $search_attributes = {};
 
@@ -1079,19 +1078,21 @@ sub _store_search {
         $search_attributes->{type} = 'article';
         $search_attributes->{issn} =
           $result->{'./metadata/titleLevel/issn'}->{value};
-        $search_attributes->{title} =
+        $search_attributes->{article_title} =
           $result->{'./metadata/itemOfInterestLevel/title'}->{value};
-        $search_attributes->{author} =
+        $search_attributes->{article_author} =
           $result->{'./metadata/itemOfInterestLevel/author'}->{value};
         $search_attributes->{publisher} =
           $result->{'./metadata/titleLevel/publisher'}->{value};
         $search_attributes->{year} =
           $result->{'./metadata/itemLevel/year'}->{value};
+        $search_attributes->{author} =
+          $result->{'./metadata/itemLevel/author'}->{value};
         $search_attributes->{issue} =
           $result->{'./metadata/itemLevel/issue'}->{value};
         $search_attributes->{pages} =
           $result->{'./metadata/itemOfInterestLevel/pages'}->{value};
-        $search_attributes->{container_title} =
+        $search_attributes->{title} =
           $result->{'./metadata/titleLevel/title'}->{value};
     }
 
