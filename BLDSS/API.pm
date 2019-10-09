@@ -41,6 +41,7 @@ use URI::Escape;
 use XML::LibXML;
 use Digest::HMAC_SHA1;
 use MIME::Base64;
+use Encode qw(encode_utf8);
 
 use Koha::Logger;
 
@@ -461,6 +462,10 @@ sub _request {
     delete $self->{error};
   }
 
+  # We're sending the body as UTF-8, we need to make sure that's
+  # what it is
+  $content = encode_utf8($content) if $content;
+
   my $req = HTTP::Request->new($method => $url);
 
   # Set our credentials according to the branch of the request
@@ -483,7 +488,7 @@ sub _request {
   # add content if specified
   if ($content) {
     $req->content($content);
-    $req->header('Content-Type' => 'text/xml');
+    $req->header('Content-Type' => 'text/xml; charset=UTF-8');
   }
 
   # Log this request
