@@ -163,7 +163,7 @@
   [% END %]
 </p>
 [% ELSE %]
-<p role="alert" class="bg-info alert alert-danger">
+<p id="bldss-no-results' role="alert" class="bg-info alert alert-danger">
   <span id="search-summary" class="pull-left">
   No results found for: &quot;[% whole.userstring %]&quot;
   [% stage = Koha.Preference('ILLModuleCopyrightClearance') ? 'copyrightclearance' : 'init' %]
