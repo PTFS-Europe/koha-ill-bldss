@@ -1,3 +1,4 @@
+[% USE Koha %]
 [% IF whole.error %]
   [% IF whole.status == 'missing_fields' %]
     <p><em>Please Note:</em> Some mandatory fields are missing.</p>
@@ -95,7 +96,8 @@
 <p role="alert" class="bg-info alert alert-success">
   <span id="search-summary" class="pull-left">
     [% whole.records %] Results of search for: &quot;[% whole.userstring %]&quot;
-    [% url = back _ "?method=create&amp;stage=init" %]
+    [% stage = Koha.Preference('ILLModuleCopyrightClearance') ? 'copyrightclearance' : 'init' %]
+    [% url = back _ "?method=create&amp;stage=$stage" %]
     [% url = url _ "&amp;backend=" _ whole.backend %]
     [% url = url _ "&amp;borrowernumber=" _ whole.borrowernumber %]
     [% url = url _ "&amp;brw=" _ whole.borrowernumber %]
@@ -164,7 +166,8 @@
 <p role="alert" class="bg-info alert alert-danger">
   <span id="search-summary" class="pull-left">
   No results found for: &quot;[% whole.userstring %]&quot;
-  [% url = back _ "?method=create&amp;stage=init" %]
+  [% stage = Koha.Preference('ILLModuleCopyrightClearance') ? 'copyrightclearance' : 'init' %]
+  [% url = back _ "?method=create&amp;stage=$stage" %]
   [% url = url _ "&amp;backend=" _ whole.backend %]
   [% url = url _ "&amp;brw=" _ whole.brw %]
   [% url = url _ "&amp;branchcode=" _ whole.branchcode %]
