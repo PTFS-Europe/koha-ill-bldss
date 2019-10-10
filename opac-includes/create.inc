@@ -178,7 +178,7 @@
   [% url = url _ "&amp;author=" _ whole.params.other.author %]
   [% url = url _ "&amp;type=" _ whole.params.other.type %]
   </span>
-  <a href="[% url | url %]" title="Restart search" class="btn btn-default btn-sm" role="button">Amend your search</a>
+  <a href="[% url | url %]" title="Restart search" class="btn btn-default pull-right" role="button">Amend your search</a>
 </p>
 [% END %]
 
