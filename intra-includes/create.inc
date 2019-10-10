@@ -214,7 +214,7 @@
   [% END %]
 </p>
 [% ELSE %]
-<p id="bldss-no-results' role="alert" class="bg-info alert alert-danger">
+<p id="bldss-no-results" role="alert" class="bg-info alert alert-danger">
   <span id="search-summary" class="pull-left">
   No results found for: &quot;[% whole.userstring %]&quot;
   [% url = back _ "?method=create&amp;stage=init" %]
