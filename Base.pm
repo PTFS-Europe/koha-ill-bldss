@@ -880,8 +880,8 @@ sub status {
             my $logger = $self->_logger;
             # TODO: This is a transitionary measure, we have removed set_data
             # in Bug 20750, so calls to it won't work. But since 20750 is
-            # currently only in master, they only won't work in master. So
-            # we're temporarily going to allow for both cases
+            # currently only in 19.05, they only won't work in earlier
+            # versions. So we're temporarily going to allow for both cases
             if ($logger->can('set_data')) {
                 $logger->set_data(
                     {
