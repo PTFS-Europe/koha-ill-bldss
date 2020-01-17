@@ -92,25 +92,65 @@ sub getLibraryPrivileges {
 
     my $shouldLoanBook = $config->getShouldLoanBook();
 
-Return whether the branch config has specified an unmediated
+Return whether the config has specified whether the unmediated
 flow should request the loan of a book if it's available
 
 =cut
 
 sub getShouldLoanBook {
-  my ($self) = @_;
-  # Per branch definitions
-  if (!$self->{config}->{branch}) {
-    # OK, no per branch config defined
-    return 0;
-  }
-  elsif (ref $self->{config}->{branch} eq 'HASH') {
-    return $self->{config}->{branch}->{loan_book_if_available} || 0;
-  }
-  elsif (ref $self->{config}->{branch} eq 'ARRAY') {
-    return 0;
-  }
+  my ($self, $request, $borrower) = @_;
 
+  # borrower_category takes precedent
+  if ($self->{config}->{borrower_category}) {
+    if (ref $self->{config}->{borrower_category} eq 'HASH') {
+        # Single per borrower_category config
+        if (
+            # If this borrower_category spec matches the borrower in question
+            $self->{config}->{borrower_category}->{code} eq $borrower->categorycode &&
+            $self->{config}->{borrower_category}->{loan_book_if_available}
+        ) {
+            return 1;
+        }
+    }
+    elsif (ref $self->{config}->{borrower_category} eq 'ARRAY') {
+        # Multiple per borrower_category configs
+        foreach my $spec (@{$self->{config}->{borrower_category}}) {
+            if (
+                $spec->{code} eq $borrower->categorycode &&
+                $spec->{loan_book_if_available}
+            ) {
+                return 1;
+            }
+        }
+    }
+  }
+  # Didn't find an answer in borrower_category, so check in branch
+  if ($self->{config}->{branch}) {
+    if (ref $self->{config}->{branch} eq 'HASH') {
+        # Single per branch config
+        if (
+            # If this branch spec matches the branch in question
+            $self->{config}->{branch}->{code} eq $request->branchcode &&
+            $self->{config}->{branch}->{loan_book_if_available}
+        ) {
+            return 1;
+        }
+    }
+    elsif (ref $self->{config}->{branch} eq 'ARRAY') {
+        # Multiple per branch configs
+        foreach my $spec (@{$self->{config}->{branch}}) {
+            if (
+                $spec->{code} eq $request->branchcode &&
+                $spec->{loan_book_if_available}
+            ) {
+                return 1;
+            }
+        }
+    }
+  }
+  # Didn't find anything in branch, check if there's a global value,
+  # otherwise return 0
+  return $self->{config}->{loan_book_if_available} || 0;
 }
 
 =head3 getDefaultFormats
@@ -149,7 +189,7 @@ sub getDefaultFormats {
     # Per borrower category definitions
     if (!$self->{config}->{borrower_category}) {
 
-      # OK, no per branch config defined
+      # OK, no per borrower_category config defined
     }
     elsif (ref $self->{config}->{borrower_category} eq 'HASH') {
       my $brwcat_spec = $self->{config}->{borrower_category};

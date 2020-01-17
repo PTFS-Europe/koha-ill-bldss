@@ -1200,7 +1200,9 @@ sub validate_delivery_input {
 
     my ( $fmt, $brw, $brn, $recipient ) = (
         $params->{service}->{format},
-        $params->{borrower}, $params->{branch}, $params->{digital_recipient},
+        $params->{borrower},
+        $params->{branch},
+        $params->{digital_recipient},
     );
 
     # The /formats API route gives no indication of whether a given format
@@ -1545,17 +1547,26 @@ sub create_order {
                 branch  => $branch->branchcode,
             }
         );
+
         # If a book loan is available, and the config says we should request it,
-        # then we should do so
-        my $type = $request->illrequestattributes->find(
-            { type => './type' }
-        )->value;
-        if (
-            $type eq 'book' &&
-            $self->getShouldLoanBook() &&
-            $self->isLoanAvailable($request)
-        ) {
-            $service->{format} = '6';
+        # and the user didn't enter any item of interest metadata,
+        # then change the service to a loan
+        my $ira = $request->illrequestattributes;
+        my $type = $ira->find( { type => './type' } )->value;
+        # Count how many item of interest metadata properties the user
+        # filled in
+        my $ioi = $ira->search( { type => { 'in' => [
+            './metadata/itemOfInterestLevel/title',
+            './metadata/itemOfInterestLevel/author',
+            './metadata/itemOfInterestLevel/pages'
+        ]} } )->count;
+        if ($type eq 'book' && $ioi == 0) {
+            if (
+                $self->getShouldLoanBook($request, $brw) &&
+                $self->isLoanAvailable($request)
+            ) {
+                $service->{format} = '6';
+            }
         }
     }
 
@@ -2019,8 +2030,10 @@ should be requested if available
 =cut
 
 sub getShouldLoanBook {
-    my ($self) = @_;
-    return $self->_config->getShouldLoanBook();
+    my ($self, $request, $borrower) = @_;
+    # First check if there is an appropriate borrower_category or branch
+    # config saying we should loan the book
+    return $self->_config->getShouldLoanBook($request, $borrower);
 }
 
 =head3 getDefaultFormat
