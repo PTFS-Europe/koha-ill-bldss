@@ -1,3 +1,4 @@
+[% USE Koha %]
 [% rspValue = whole.value %]
 
 [% IF whole.stage == "availability" %]
@@ -20,9 +21,9 @@
     <ul>
       [% FOREACH speed IN format.speeds.1 %]
       <li>
-        <input name="speed" id="speed" type="radio"
+        <input name="speed" data-format="[% format.key.1 %]" class="speed_radio" id="format_[% format.key.1 %]_speed_[% speed.key.1 %]" type="radio"
                value=[% speed.key.1 %] />
-        <span id="speed">
+        <span id="speed_name_[% speed.key.1 %]">
           [% speed.speed.0 %]: [% speed.speed.1 %]
         </span>
       </li>
@@ -33,9 +34,9 @@
     <ul>
       [% FOREACH quality IN format.qualities.1 %]
       <li>
-        <input name="quality" id="quality" type="radio"
+        <input name="quality" data-format="[% format.key.1 %]" class="quality_radio" id="format_[% format.key.1 %]_quality_[% quality.key.1 %]" type="radio"
                value=[% quality.key.1 %] />
-        <span id="quality">
+        <span id="quality_name_[% quality.key.1 %]">
           [% quality.quality.0 %]: [% quality.quality.1 %]
         </span>
       </li>
@@ -43,7 +44,7 @@
     </ul>
     [% END %]
     <br/>
-    <input class="btn btn-default" type="submit" value="Check this price" />
+    <input data-submit-format="[% format.key.1 %]" class="format-submit btn btn-default" disabled type="submit" value="Check this price" />
   </fieldset>
 </form>
 [% END %]
@@ -101,4 +102,27 @@
 <p><a href=[% forward | url %] title="View all requests">View requests.</a></p>
 [% ELSE %]
 <h3>Unknown Stage of Confirm method</h3>
+[% END %]
+[% BLOCK backend_jsinclude %]
+<script>
+    //<![CDATA[
+    // Only allow submission when required values have been selected
+    document.addEventListener('DOMContentLoaded', function(){
+        $('.speed_radio, .quality_radio').click(function() {
+            var formatObj = {};
+            var formats = $("input[name='format']").each(function() {
+                formatObj[$(this).attr('value')] = 1;
+            });
+            Object.keys(formatObj).forEach(function(key) {
+                var formatChecked = $('input[data-format='+key+']:checked').length;
+                if (formatChecked == 2) {
+                    $('input[data-submit-format='+key+']').attr("disabled", false);
+                } else {
+                    $('input[data-submit-format='+key+']').attr("disabled", true);
+                }
+            });
+        });
+    });
+    //]]>
+</script>
 [% END %]
