@@ -1242,11 +1242,6 @@ sub validate_delivery_input {
     }
     elsif ( 'physical' eq $formats->{$fmt} ) {
 
-        # Country
-        $delivery->{Address}->{Country} =
-          country2code( $brn->branchcountry, LOCALE_CODE_ALPHA_3 )
-          || die "Invalid country in branch record: $brn->branchcountry.";
-
         # Mandatory Fields
         my $mandatory_fields = {
             AddressLine1  => "branchaddress1",
@@ -1254,6 +1249,15 @@ sub validate_delivery_input {
             PostOrZipCode => "branchzip",
         };
         my @missing_fields = ();
+
+        # Country
+        my $c_code = country2code( $brn->branchcountry, LOCALE_CODE_ALPHA_3 );
+        if (!$c_code) {
+            push @missing_fields, 'branchcountry';
+        } else {
+            $delivery->{Address}->{Country} = $c_code
+        }
+
         while ( my ( $bl_field, $k_field ) = each %{$mandatory_fields} ) {
             if ( !$brn->$k_field ) {
                 push @missing_fields, $k_field;
@@ -1266,7 +1270,7 @@ sub validate_delivery_input {
             $status->{error} = 1;
             $status->{message} =
                 "Physical delivery requested, "
-              . "but branch missing "
+              . "but branch has the following fields either missing, or incorrectly formatted: "
               . join( ", ", @missing_fields );
         }
         else {
