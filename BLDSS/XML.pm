@@ -135,7 +135,8 @@ sub get_one_object {
     $results = $self->findnodes($xpath);
   }
   if ($results->size > 1) {
-    die "We have more than one result.  This should not have happened.";
+    warn "We have more than one result.  This should not have happened.";
+    return 0;
   }
   elsif ($results->size == 0) {
     return 0;
@@ -217,8 +218,13 @@ sub services {
 }
 
 sub get_service {
+  #### DEPRECATE: 99% certain this sub is not used
+  warn('**DEPRECATED**: BLDSS::XML::get_service in use');
   my ($self, $id) = @_;
-  die "get_service requires an id!" unless ($id);
+  if (!$id) {
+    warn "get_service requires an id!";
+    return;
+  }
   return $self->get_one_object("./services/service[attribute::id='$id']");
 }
 
@@ -356,7 +362,10 @@ sub formats {
 
 sub get_format {
   my ($self, $id) = @_;
-  die "get_format requires an id!" unless ($id);
+  if (!$id) {
+    warn "get_format requires an id!";
+    return;
+  }
   return $self->get_one_object("./format[attribute::id='$id']");
 }
 
@@ -407,8 +416,10 @@ sub prices {
 
 sub get_price {
   my ($self, $speed, $quality) = @_;
-  die "get_price: whilst quality is optional, speed is mandatory!"
-    unless ($speed);
+  if (!$speed) {
+    warn "get_price: whilst quality is optional, speed is mandatory!";
+    return;
+  }
   return $self->get_one_object(
     "./price[attribute::speed='$speed' and attribute::quality='$quality']")
     || $self->get_one_object("./price[attribute::speed='$speed']");

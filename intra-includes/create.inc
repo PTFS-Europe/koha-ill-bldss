@@ -403,7 +403,7 @@
             });
             $('#search_submit').attr('disabled', comp.length < 2);
         });
-        # Add autocomplete for patron selection
+        // Add autocomplete for patron selection
         $('#create_form #cardnumber').autocomplete({
             source: "/cgi-bin/koha/circ/ysearch.pl",
             minLength: 3,

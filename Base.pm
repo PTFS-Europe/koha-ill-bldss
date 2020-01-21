@@ -1785,8 +1785,8 @@ sub prices {
     );
     return $response if ( $response->{error} );
     my $result   = $response->{value}->result;
-    my $price    = 0;
-    my $service  = 0;
+    my $price    = {};
+    my $service  = {};
     my $services = $result->services;
 
     foreach ( @{$services} ) {
