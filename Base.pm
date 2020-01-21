@@ -387,6 +387,7 @@ sub create {
         if ( $brw_count == 0 ) {
             $response->{status} = "invalid_borrower";
             $response->{value}  = $params;
+            $response->{stage} = "init";
             $response->{error}  = 1;
             return $response;
         }
@@ -1314,6 +1315,9 @@ sub _validate_borrower {
     # Perform cardnumber search.  If no results, perform surname search.
     # Return ( 0, undef ), ( 1, $brw ) or ( n, $brws )
     my ( $input, $action ) = @_;
+
+    return ( 0, undef ) if !$input || length $input == 0;
+
     my $patrons = Koha::Patrons->new;
     my ( $count, $brw );
     my $query = { cardnumber => $input };

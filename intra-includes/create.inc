@@ -1,3 +1,6 @@
+[% USE Koha %]
+[% USE Asset %]
+[% USE raw %]
 <style>
     #interlibraryloans #search-summary {
         left: 15px;
@@ -30,7 +33,7 @@
 
 [% ELSIF whole.stage == "init" %]
 <h2>Search the British Library</h2>
-<form method="POST" action=[% here %]>
+<form method="POST" action="[% here %]" id="create_form">
   <fieldset class="rows">
     <legend>Search the British Library</legend>
     <input name="stage" id="stage" value="validate" type="hidden"/>
@@ -77,8 +80,8 @@
     <ol>
       <li>
         <label class="required" for="cardnumber">Card number, username or surname:</label>
-        <input type="text" name="cardnumber" id="cardnumber" type="text"
-	       value="[% whole.value.other.cardnumber %]" />
+        <input type="text" autocomplete="off" name="cardnumber" id="cardnumber" type="text"
+           value="[% whole.value.other.cardnumber %]" />
       </li>
       <li>
         <label class="required" for="branchcode">Destination library:</label>
@@ -96,7 +99,7 @@
     </ol>
   </fieldset>
   <fieldset class="action">
-    <input type="submit" value="Search"/>
+    <input id="search_submit" disabled type="submit" value="Search"/>
     <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl">Cancel</a>
   </fieldset>
 </form>
@@ -389,4 +392,34 @@
   </fieldset>
 </form>
 
+[% END %]
+[% BLOCK backend_jsinclude %]
+<script>
+    // Require a username a branch selection
+    document.addEventListener('DOMContentLoaded', function(){
+        $('#create_form #cardnumber, #create_form #branchcode').change(function() {
+            var comp = ['#cardnumber','#branchcode'].filter(function(id) {
+                return $(id).val().length > 0;
+            });
+            $('#search_submit').attr('disabled', comp.length < 2);
+        });
+        # Add autocomplete for patron selection
+        $('#create_form #cardnumber').autocomplete({
+            source: "/cgi-bin/koha/circ/ysearch.pl",
+            minLength: 3,
+            select: function( event, ui ) {
+                var field = ui.item.cardnumber;
+                $('#create_form #cardnumber').val(field)
+                return false;
+            }
+        })
+        .data( "ui-autocomplete" )._renderItem = function( ul, item ) {
+            return $( "<li></li>" )
+            .data( "ui-autocomplete-item", item )
+            .append( "<a>" + item.surname + ", " + item.firstname + " (" + item.cardnumber + ") <small>" + item.address + " " + item.city + " " + item.zipcode + " " + item.country + "</small></a>" )
+            .appendTo( ul );
+        };
+    });
+    //]]>
+</script>
 [% END %]
