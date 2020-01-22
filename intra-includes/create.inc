@@ -148,10 +148,8 @@
 
 [% ELSIF whole.stage == 'search_results' %]
 <h2>Search results</h2>
-[% IF whole.value.0 %]
-<p role="alert" class="bg-info alert alert-success">
-  <span id="search-summary" class="pull-left">
-    [% whole.records %] Results of search for: &quot;[% whole.userstring %]&quot;
+[% BLOCK search_summary %]
+<div id="bldss_search_summary" style="padding:1em 0;display:flex;justify-content:space-between;align-items:center;">
     [% url = back _ "?method=create&amp;stage=init" %]
     [% url = url _ "&amp;backend=" _ whole.backend %]
     [% url = url _ "&amp;cardnumber=" _ whole.cardnumber %]
@@ -163,9 +161,33 @@
     [% url = url _ "&amp;title=" _ whole.params.other.title %]
     [% url = url _ "&amp;author=" _ whole.params.other.author %]
     [% url = url _ "&amp;type=" _ whole.params.other.type %]
-  </span>
-  <a href="[% url | url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
-</p>
+    [% start_matches = whole.userstring.match('start_rec: (\d+)') %]
+    [% length_matches = whole.userstring.match('max_results: (\d+)') %]
+    [% keywords_matches = whole.userstring.match('\[keywords: (.+?)]') %]
+    [% type_matches = whole.userstring.match('\[type: (.+?)]') %]
+    <div>
+    Showing [% start_matches.0 %] to [% start_matches.0 + length_matches.0 %] of [% whole.records %] for search &quot;[% keywords_matches.0 %]&quot; with type &quot;[% type_matches.0 %]&quot;
+    </div>
+    <div>
+        [% IF whole.previous %]
+        <a title="Previous set of results" href=[% here _ whole.previous | url %]>&lsaquo; Previous</a>
+        [% ELSE %]
+        <span> &lsaquo; Previous</span>
+        [% END %]
+        [% IF whole.next %]
+        <a title="Next set of results" href=[% here _ whole.next | url %]>Next &rsaquo;</a>
+        [% ELSE %]
+        <span>Next &rsaquo;</span>
+        [% END %]
+    </div>
+    <div>
+        <a href="[% url | url %]" title="Restart search" class="btn btn-default btn-sm pull-right" role="button">Amend your search</a>
+    </div>
+</div>
+[% END %]
+<div id="bldss_search_results" style="margin-top:1em;border-top:1px solid #bcbcbc;">
+    [% IF whole.value.0 %]
+    [% INCLUDE search_summary %]
 <table class="table table-bordered table-striped">
   <thead>
     <tr>
@@ -204,18 +226,8 @@
     [% END %]
   </tbody>
 </table>
-<p>
-  [% IF whole.previous %]
-  <a class="nav" title="Previous set of results" href=[% here _ whole.previous | url %]>&lsaquo;&lsaquo; Previous</a>
-  [% ELSE %]
-  <span> &lsaquo;&lsaquo; Previous</span>
-  [% END %]
-  [% IF whole.next %]
-  <a class="nav" title="Next set of results" href=[% here _ whole.next | url %]>Next &rsaquo;&rsaquo;</a>
-  [% ELSE %]
-  <span>Next &rsaquo;&rsaquo;</span>
-  [% END %]
-</p>
+</div>
+[% INCLUDE search_summary %]
 [% ELSE %]
 <p id="bldss-no-results" role="alert" class="bg-info alert alert-danger">
   <span id="search-summary" class="pull-left">
