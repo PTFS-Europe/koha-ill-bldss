@@ -67,9 +67,13 @@ ILL Interface.
 
 sub new {
     my ( $class, $params ) = @_;
+    my $framework =
+        defined $params->{config}->{configuration}->{raw_config}->{framework} ?
+        $params->{config}->{configuration}->{raw_config}->{framework} :
+        'FA';
     my $self = {
         keywords  => [ "name", "accessor", "inSummary", "many" ],
-        framework => 'FA'
+        framework => $framework
     };
     bless( $self, $class );
     my $config =
@@ -985,8 +989,7 @@ sub bldss2biblio {
     # Suppress the record
     $self->_set_suppression($record);
 
-    # We hardcode a framework name of 'ILL', which will need to exist
-    # All this stuff should be configurable
+    # Create a biblio record
     my ($biblionumber, $biblioitemnumber) =
         AddBiblio( $record, $self->{framework} );
 
