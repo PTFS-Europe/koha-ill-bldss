@@ -28,6 +28,7 @@ use XML::LibXML;
 use MARC::Record;
 use C4::Context;
 use C4::Biblio qw( AddBiblio );
+use C4::Charset qw( MarcToUTF8Record );
 use Koha::Illrequest::Config;
 use Koha::Illbackends::BLDSS::BLDSS::API;
 use Koha::Illbackends::BLDSS::BLDSS::Config;
@@ -970,6 +971,13 @@ sub bldss2biblio {
 
     # Create the MARC::Record object and populate
     my $record = MARC::Record->new();
+
+	# Fix character set where appropriate
+	my $marcflavour = C4::Context->preference('marcflavour') || 'MARC21';
+	if ($record->encoding() eq 'MARC-8') {
+		($record) = MarcToUTF8Record($record, $marcflavour);
+	}
+
     if ($isbn) {
         my @isbns = split /\|/, $isbn;
         for my $each (@isbns) {
