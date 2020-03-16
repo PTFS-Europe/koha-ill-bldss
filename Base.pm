@@ -1448,6 +1448,14 @@ sub availability {
                     key     => [ "Key",     $quality->key ],
                   };
             }
+            my @delivery_modifiers;
+            foreach my $modifier ( @{ $format->deliveryModifiers } ) {
+                push @delivery_modifiers,
+                  {
+                    modifier => [ "Modifier", $modifier->textContent ],
+                    key      => [ "Key",      $modifier->key ],
+                  };
+            }
 
             push @formats,
               {
@@ -1455,6 +1463,7 @@ sub availability {
                 key    => [ "Key",    $format->deliveryFormat->key ],
                 speeds => [ "Speeds", \@speeds ],
                 qualities => [ "Qualities", \@qualities ],
+                deliveryModifiers => [ "Modifiers", \@delivery_modifiers ],
               };
         }
     }

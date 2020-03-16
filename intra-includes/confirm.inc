@@ -16,6 +16,15 @@
     <input type="hidden" name="method" value="[% whole.method %]" />
     <input type="hidden" name="stage" value="[% whole.future %]" />
     <h4>[% format.format.0 %]: [% format.format.1 %]</h4>
+    [% loan_restricted = 1 %]
+    [% FOREACH modifier IN format.deliveryModifiers.1 %]
+      [% IF modifier.key.1 == '3' %]
+        [% loan_restricted = 0 %]
+      [% END %]
+    [% END %]
+    [% IF format.format.1 == 'Loan' && loan_restricted %]
+    <h4>(may not be available due to loan address restrictions)</h4>
+    [% END %]
     <h5>[% format.speeds.0 %]</h5>
     <ul>
       [% FOREACH speed IN format.speeds.1 %]

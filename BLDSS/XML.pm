@@ -32,26 +32,27 @@ sub load_xml {
 sub rebless {
   my ($self, $node) = @_;
   my $interesting_elements = {
-    apiResponse     => 1,
-    availableFormat => 1,
-    availability    => 1,
+    apiResponse      => 1,
+    availableFormat  => 1,
+    availability     => 1,
 
-    deliveryFormat  => 1,
-    format          => 1,
-    price           => 1,
-    quality         => 1,
-    result          => 1,
-    record          => 1,
-    numberOfRecords => 1,
-    service         => 1,
-    speed           => 1,
+    deliveryFormat   => 1,
+    deliveryModifier => 1,
+    format           => 1,
+    price            => 1,
+    quality          => 1,
+    result           => 1,
+    record           => 1,
+    numberOfRecords  => 1,
+    service          => 1,
+    speed            => 1,
 
-    newOrder => 1,
+    newOrder         => 1,
 
-    orderline       => 1,
-    deliveryDetails => 1,
-    address         => 1,
-    event           => 1,
+    orderline        => 1,
+    deliveryDetails  => 1,
+    address          => 1,
+    event            => 1,
   };
 
 
@@ -252,7 +253,7 @@ package Koha::Illbackends::BLDSS::BLDSS::XML::AvailableFormat;
 use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
 
 sub elements {
-  return qw(deliveryModifiers);
+  return qw();
 }
 
 sub attributes {
@@ -274,6 +275,13 @@ sub speeds {
   my @speeds = map { Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_) }
     $self->findnodes("./availableSpeeds/speed");
   return \@speeds;
+}
+
+sub deliveryModifiers {
+    my $self = shift;
+    my @modifiers = map { Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_) }
+      $self->findnodes("./deliveryModifiers/deliveryModifier");
+    return \@modifiers;
 }
 
 sub qualities {
@@ -311,6 +319,21 @@ sub attributes {
 sub new {
   my $class = shift;
   return $class->SUPER::new('speed');
+}
+
+# DeliveryModifier Object.
+
+package Koha::Illbackends::BLDSS::BLDSS::XML::DeliveryModifier;
+
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
+
+sub attributes {
+  return qw(key);
+}
+
+sub new {
+  my $class = shift;
+  return $class->SUPER::new('deliveryModifier');
 }
 
 # Quality Object.
