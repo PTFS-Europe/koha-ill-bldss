@@ -1933,7 +1933,7 @@ sub _search {
       . "&branchcode=$other->{branchcode}";
 
     $nav_qry .= "&step=$other->{step}" if $other->{step};
-    $nav_qry .= $other->{query} ? "&query=" . uri_escape( $other->{query} ) : '';
+    $nav_qry .= $other->{query} ? "&query=" . $other->{query} : '';
 
     my $userstring = '';
     $userstring .= $other->{query} ? "[keywords: " . $other->{query} . "]" : '';
