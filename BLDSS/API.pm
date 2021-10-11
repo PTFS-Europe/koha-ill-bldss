@@ -645,7 +645,7 @@ sub _encode_order {
   my ($ref, $outside_uk) = @_;
   my $doc     = XML::LibXML::Document->new();
   my $request = $doc->createElement('NewOrderRequest');
-  if ($outside_uk) {
+  if (!$outside_uk) {
     my $uk_flag = $doc->createElement('payCopyright');
     $uk_flag->appendTextNode('true');
     $request->appendChild($uk_flag);
