@@ -1236,7 +1236,7 @@ sub validate_delivery_input {
     if ( 'digital' eq $formats->{$fmt} ) {
         my $target = $brw->email || "";
         if ( 'branch' eq $recipient ) {
-            if ( $brn->{branchreplyto} ) {
+            if ( $brn->branchreplyto ) {
                 $target = $brn->branchreplyto;
             }
             else {
