@@ -1,6 +1,7 @@
 [% USE Koha %]
 [% USE Asset %]
 [% USE raw %]
+[% SET koha_version = Koha.Version %]
 <style>
     #interlibraryloans #search-summary {
         left: 15px;
@@ -415,7 +416,8 @@
             });
             $('#search_submit').attr('disabled', comp.length < 2);
         });
-        // Add autocomplete for patron selection
+        /* Maintain patron autocomplete compatibility across versions */
+        [% IF koha_version.major <= 22 && koha_version.minor < 11 %]
         $('#create_form #cardnumber').autocomplete({
             source: "/cgi-bin/koha/circ/ysearch.pl",
             minLength: 3,
@@ -431,6 +433,17 @@
             .append( "<a>" + item.surname + ", " + item.firstname + " (" + item.cardnumber + ") <small>" + item.address + " " + item.city + " " + item.zipcode + " " + item.country + "</small></a>" )
             .appendTo( ul );
         };
+        [% ELSE %]
+        patron_autocomplete(
+          $('#create_form #cardnumber'),
+          {
+            'on-select-callback': function( event, ui ) {
+              $("#create_form #cardnumber").val( ui.item.patron_id );
+              return false;
+            }
+          }
+        );
+        [% END %]        
     });
     //]]>
 </script>
