@@ -17,6 +17,7 @@ The version of the backend you require depends on the version of Koha you are us
 * In the `koha-ill-bldss` directory switch to the branch you wish to use
 * Rename the `koha-ill-bldss` directory to `BLDSS`
 * Activate ILL by enabling the `ILLModule` system preference
+* Install [Locale::Country](https://metacpan.org/pod/Locale::Country) perl module
 
 ## Configuration
 
@@ -30,11 +31,11 @@ The version of the backend you require depends on the version of Koha you are us
   - <api_application_auth>
   - <api_url>
   - <is_outside_uk>
-  
+
   Normally only `<api_application>` and `<api_application_auth>` need to
   be set. `<api_url>` defaults to the test environment, so it should be
   set when switching to production, to "https://api.bldss.bl.uk".
-  
+
   `<is_outside_uk> `should be set according to whether the request is being made
   from an institution outside the UK. If not, an additional flag is sent to
   the BLDSS API request: `<payCopyright>true</payCopyright>`. If this flag is
