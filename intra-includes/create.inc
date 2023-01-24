@@ -411,7 +411,7 @@
     // Require a username a branch selection
     document.addEventListener('DOMContentLoaded', function(){
         $('#create_form #cardnumber, #create_form #branchcode').change(function() {
-            var comp = ['#cardnumber','#branchcode'].filter(function(id) {
+            var comp = ['#create_form #cardnumber','#create_form #branchcode'].filter(function(id) {
                 return $(id).val().length > 0;
             });
             $('#search_submit').attr('disabled', comp.length < 2);
