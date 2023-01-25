@@ -29,6 +29,7 @@
       </li>
       [% END %]
     </ul>
+    <input type="hidden" name="deliveryModifiers" id="deliveryModifiers" value="[% format.deliveryModifiers.1 %]" />
     [% IF format.qualities %]
     <h5>[% format.qualities.0 %]</h5>
     <ul>
@@ -59,6 +60,8 @@
          value="[% rspValue.coordinates.speed %]" type="hidden"/>
   <input name="quality" id="quality"
          value="[% rspValue.coordinates.quality %]" type="hidden"/>
+  <input name="deliveryModifiers" id="deliveryModifiers"
+         value="[% rspValue.deliveryModifiers %]" type="hidden"/>
   <input name="service" id="service"
          value="[% rspValue.service.1 %]" type="hidden"/>
 

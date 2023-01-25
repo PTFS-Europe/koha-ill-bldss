@@ -1225,11 +1225,12 @@ sub delete_illrequestattributes {
 sub validate_delivery_input {
     my ( $self, $params ) = @_;
 
-    my ( $fmt, $brw, $brn, $recipient ) = (
+    my ( $fmt, $brw, $brn, $recipient, $modifiers ) = (
         $params->{service}->{format},
         $params->{borrower},
         $params->{branch},
         $params->{digital_recipient},
+        $params->{service}->{deliveryModifiers}
     );
 
     # The /formats API route gives no indication of whether a given format
@@ -1269,46 +1270,52 @@ sub validate_delivery_input {
     }
     elsif ( 'physical' eq $formats->{$fmt} ) {
 
-        # Mandatory Fields
-        my $mandatory_fields = {
-            AddressLine1  => "branchaddress1",
-            TownOrCity    => "branchcity",
-            PostOrZipCode => "branchzip",
-        };
-        my @missing_fields = ();
+        # Only add Address to delivery if
+        # deliveryModifier 3 Loan Address Override Available
+        # exists in the availability reponse
+        if ( $modifiers =~ /3/ ) {
 
-        # Country
-        my $c_code = country2code( $brn->branchcountry, LOCALE_CODE_ALPHA_3 );
-        if (!$c_code) {
-            push @missing_fields, 'branchcountry';
-        } else {
-            $delivery->{Address}->{Country} = $c_code
-        }
+            # Mandatory Fields
+            my $mandatory_fields = {
+                AddressLine1  => "branchaddress1",
+                TownOrCity    => "branchcity",
+                PostOrZipCode => "branchzip",
+            };
+            my @missing_fields = ();
 
-        while ( my ( $bl_field, $k_field ) = each %{$mandatory_fields} ) {
-            if ( !$brn->$k_field ) {
-                push @missing_fields, $k_field;
+            # Country
+            my $c_code = country2code( $brn->branchcountry, LOCALE_CODE_ALPHA_3 );
+            if (!$c_code) {
+                push @missing_fields, 'branchcountry';
+            } else {
+                $delivery->{Address}->{Country} = $c_code
+            }
+
+            while ( my ( $bl_field, $k_field ) = each %{$mandatory_fields} ) {
+                if ( !$brn->$k_field ) {
+                    push @missing_fields, $k_field;
+                }
+                else {
+                    $delivery->{Address}->{$bl_field} = $brn->$k_field;
+                }
+            }
+            if (@missing_fields) {
+                $status->{error} = 1;
+                $status->{message} =
+                    "Physical delivery requested, "
+                . "but branch has the following fields either missing, or incorrectly formatted: "
+                . join( ", ", @missing_fields );
             }
             else {
-                $delivery->{Address}->{$bl_field} = $brn->$k_field;
-            }
-        }
-        if (@missing_fields) {
-            $status->{error} = 1;
-            $status->{message} =
-                "Physical delivery requested, "
-              . "but branch has the following fields either missing, or incorrectly formatted: "
-              . join( ", ", @missing_fields );
-        }
-        else {
-            # Optional Fields
-            my $optional_fields = {
-                AddressLine2  => "branchaddress2",
-                AddressLine3  => "branchaddress3",
-                CountyOrState => "branchstate",
-            };
-            while ( my ( $bl_field, $k_field ) = each %{$optional_fields} ) {
-                $delivery->{Address}->{$bl_field} = $brn->$k_field || "";
+                # Optional Fields
+                my $optional_fields = {
+                    AddressLine2  => "branchaddress2",
+                    AddressLine3  => "branchaddress3",
+                    CountyOrState => "branchstate",
+                };
+                while ( my ( $bl_field, $k_field ) = each %{$optional_fields} ) {
+                    $delivery->{Address}->{$bl_field} = $brn->$k_field || "";
+                }
             }
         }
     }
@@ -1493,6 +1500,15 @@ sub availability {
             || ( $isTitle && ( $format->deliveryFormat->key == 6 ) ) )
         {
 
+            # Delivery Modifiers
+            # 1 = Library Privilege Available, 2 = Library Privilege Mandatory,
+            # 3 = Loan Address Override Available, 4 = Copy Address Override Available,
+            # 5 = Copyright Exempt
+            my $deliveryModifiers = '';
+            foreach my $deliveryModifier ( @{ $format->deliveryModifiers } ) {
+                $deliveryModifiers .= $deliveryModifier->key;
+            }
+
             my @speeds;
             foreach my $speed ( @{ $format->speeds } ) {
                 push @speeds,
@@ -1515,6 +1531,7 @@ sub availability {
                 format => [ "Format", $format->deliveryFormat->textContent ],
                 key    => [ "Key",    $format->deliveryFormat->key ],
                 speeds => [ "Speeds", \@speeds ],
+                deliveryModifiers => [ "Delivery Modifiers", $deliveryModifiers ],
                 qualities => [ "Qualities", \@qualities ],
               };
         }
@@ -1572,6 +1589,7 @@ sub create_order {
             speed   => $params->{other}->{speed},
             quality => $params->{other}->{quality},
             format  => $params->{other}->{format},
+            deliveryModifiers => $params->{other}->{deliveryModifiers}
         };
     }
     else {
@@ -1831,6 +1849,7 @@ sub prices {
         price           => [ "Price",             $price->textContent ],
         service         => [ "Service",           $service->{id} ],
         coordinates     => $coordinates,
+        deliveryModifiers => $params->{other}->{'deliveryModifiers'},
         illrequest_id   => $params->{request}->illrequest_id
     };
     $response->{method} = "confirm";
