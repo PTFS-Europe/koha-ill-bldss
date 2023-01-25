@@ -45,6 +45,7 @@ sub rebless {
     numberOfRecords => 1,
     service         => 1,
     speed           => 1,
+    deliveryModifier=> 1,
 
     newOrder => 1,
 
@@ -275,6 +276,13 @@ sub deliveryFormat {
   return $self->get_one_object("./deliveryFormat");
 }
 
+sub deliveryModifiers {
+  my $self = shift;
+  my @deliveryModifiers = map { Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_) }
+    $self->findnodes("./deliveryModifiers/deliveryModifier");
+  return \@deliveryModifiers;
+}
+
 sub speeds {
   my $self = shift;
   my @speeds = map { Koha::Illbackends::BLDSS::BLDSS::XML->rebless($_) }
@@ -302,6 +310,21 @@ sub attributes {
 sub new {
   my $class = shift;
   return $class->SUPER::new('deliveryFormat');
+}
+
+# Delivery Modifier Object.
+
+package Koha::Illbackends::BLDSS::BLDSS::XML::DeliveryModifier;
+
+use base qw(Koha::Illbackends::BLDSS::BLDSS::XML::Element);
+
+sub attributes {
+  return qw(key);
+}
+
+sub new {
+  my $class = shift;
+  return $class->SUPER::new('deliveryModifier');
 }
 
 # Speed Object.
