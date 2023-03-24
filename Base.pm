@@ -692,7 +692,7 @@ sub migrate {
             $response->{branchcode}     = $original_request->branchcode;
 
             # Initiate search with details from last request
-            my @recognised_attributes = (qw/isbn issn title author srchany/);
+            my @recognised_attributes = (qw/isbn issn article_title title author srchany/);
             my $original_attributes =
               $original_request->illrequestattributes->search(
                 { type => { '-in' => \@recognised_attributes } } );
