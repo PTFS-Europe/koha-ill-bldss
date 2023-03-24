@@ -1904,7 +1904,7 @@ sub _search {
     );
 
     # Move article_title into title field in preparation for BLDSS search
-    $opts->{title} = $opts->{article_title} if $req_type = "article";
+    $opts->{title} = $opts->{article_title} if $req_type = "article" && $opts->{article_title};
 
     # Perform search
     my $response =
