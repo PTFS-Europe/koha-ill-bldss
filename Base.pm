@@ -20,6 +20,7 @@ package Koha::Illbackends::BLDSS::Base;
 use Modern::Perl;
 use Carp;
 use File::Basename qw( dirname );
+use C4::Installer;
 
 use Koha::Libraries;
 use Clone qw( clone );
@@ -1183,6 +1184,7 @@ sub create_illrequestattributes {
 
         my $data = {
             illrequest_id => $request->illrequest_id,
+            column_exists( 'illrequestattributes', 'backend' ) ? (backend =>"BLDSS") : (),
             type          => $type,
             value         => $resolved_value
         };
