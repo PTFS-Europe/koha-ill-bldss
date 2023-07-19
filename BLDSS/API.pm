@@ -645,11 +645,6 @@ sub _encode_order {
   my ($ref, $outside_uk) = @_;
   my $doc     = XML::LibXML::Document->new();
   my $request = $doc->createElement('NewOrderRequest');
-  if ($outside_uk) {
-    my $uk_flag = $doc->createElement('payCopyright');
-    $uk_flag->appendTextNode('true');
-    $request->appendChild($uk_flag);
-  }
   my $element = $doc->createElement('type');
   if ($ref->{type} =~ m/^S/i) {    # Synchronous or s allowed
     $element->appendTextNode('S');
@@ -671,6 +666,11 @@ sub _encode_order {
     }
   }
 
+  if ($outside_uk) {
+    my $uk_flag = $doc->createElement('payCopyright');
+    $uk_flag->appendTextNode('true');
+    $request->appendChild($uk_flag);
+  }
   $request->appendChild(_add_delivery_element($doc, $ref->{Delivery}));
 
   $request->appendChild(_add_item_element($doc, $ref->{Item}));
