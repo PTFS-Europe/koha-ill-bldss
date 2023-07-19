@@ -667,6 +667,11 @@ sub _encode_order {
   }
 
   if ($outside_uk) {
+    my @payCopyrightChildrenNodes = $request->getChildrenByTagName('payCopyright');
+    if (@payCopyrightChildrenNodes) {
+        $request->removeChild( $payCopyrightChildrenNodes[0] );
+    }
+
     my $uk_flag = $doc->createElement('payCopyright');
     $uk_flag->appendTextNode('true');
     $request->appendChild($uk_flag);
