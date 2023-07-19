@@ -1665,7 +1665,7 @@ sub create_order {
         # Optional params:
         requestor         => join( " ", $brw->firstname, $brw->surname ),
         customerReference => $request->id_prefix . '-' . $request->illrequest_id,
-        payCopyright      => $self->getPayCopyright($branch),
+        payCopyright      => $self->getPayCopyright($branch->branchcode),
     };
 
     my $response = $self->_process( $self->_api->create_order(
@@ -2043,10 +2043,11 @@ branch.
 =cut
 
 sub getPayCopyright {
-    my ( $self, $branch ) = @_;
+    my ( $self, $branchcode ) = @_;
     my $libraryPrivileges = $self->_config->getLibraryPrivileges;
     my $privilege =
-      $libraryPrivileges->{$branch} || $libraryPrivileges->{default} || 0;
+      $libraryPrivileges->{$branchcode} || $libraryPrivileges->{default} || 0;
+
     return 'false' if $privilege;
     return 'true';
 }
