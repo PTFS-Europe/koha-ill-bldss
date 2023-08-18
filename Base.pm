@@ -786,7 +786,7 @@ sub migrate {
             $request->backend( $self->name );
             $request->placed( DateTime->now );
             $request->updated( DateTime->now );
-            $request->biblio_id($biblionumber);
+            $request->biblio_id($biblionumber) unless !$biblionumber;
             $request->store;
 
             # ...Add original query details to result for storage
