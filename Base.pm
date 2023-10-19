@@ -255,36 +255,49 @@ sub metadata {
     my ( $self, $request ) = @_;
     my $attrs = $request->illrequestattributes;
     my $return = { UIN => $attrs->find( { type => './uin' } )->value };
-
-    $return->{Title} = $attrs->find( { type => './metadata/titleLevel/title' } )->value
-      if $attrs->find( { type => './metadata/titleLevel/title' } );
-
-    $return->{Author} = $attrs->find( { type => './metadata/titleLevel/author' } )->value
-        if $attrs->find( { type => './metadata/titleLevel/author' } );
-
-    $return->{Publisher} = $attrs->find( { type => './metadata/titleLevel/publisher' } )->value
-      if $attrs->find( { type => './metadata/titleLevel/publisher' } );
-
-    $return->{"Shelf mark"} = $attrs->find( { type => './metadata/titleLevel/shelfmark' } )->value
-      if $attrs->find( { type => './metadata/titleLevel/shelfmark' } );
-
-    $return->{Year} = $attrs->find( { type => './metadata/itemLevel/year' } )->value
-        if $attrs->find( { type => './metadata/itemLevel/year' } );
-
-    $return->{Issue} = $attrs->find( { type => './metadata/itemLevel/issue' } )->value
-        if $attrs->find( { type => './metadata/itemLevel/issue' } );
-
-    $return->{Volume} = $attrs->find( { type => './metadata/itemLevel/volume' } )->value
-      if $attrs->find( { type => './metadata/itemLevel/volume' } );
-
-    $return->{"Item part title"} = $attrs->find( { type => './metadata/itemOfInterestLevel/title' } )->value
-        if $attrs->find( { type => './metadata/itemOfInterestLevel/title' } );
-
-    $return->{"Item part pages"} = $attrs->find( { type => './metadata/itemOfInterestLevel/pages' } )->value
-        if $attrs->find( { type => './metadata/itemOfInterestLevel/pages' } );
-
-    $return->{"Item part author"} = $attrs->find( { type => './metadata/itemOfInterestLevel/author' } )->value
-        if $attrs->find( { type => './metadata/itemOfInterestLevel/author' } );
+    $return->{Title} =
+        $attrs->find( { type => './metadata/titleLevel/title' } )
+      ? $attrs->find( { type => './metadata/titleLevel/title' } )->value
+      : undef;
+    $return->{Author} =
+        $attrs->find( { type => './metadata/titleLevel/author' } )
+      ? $attrs->find( { type => './metadata/titleLevel/author' } )->value
+      : undef;
+    $return->{Publisher} =
+        $attrs->find( { type => './metadata/titleLevel/publisher' } )
+      ? $attrs->find( { type => './metadata/titleLevel/publisher' } )->value
+      : undef;
+    $return->{"Shelf mark"} =
+        $attrs->find( { type => './metadata/titleLevel/shelfmark' } )
+      ? $attrs->find( { type => './metadata/titleLevel/shelfmark' } )->value
+      : undef;
+    $return->{Year} =
+        $attrs->find( { type => './metadata/itemLevel/year' } )
+      ? $attrs->find( { type => './metadata/itemLevel/year' } )->value
+      : undef;
+    $return->{Issue} =
+        $attrs->find( { type => './metadata/itemLevel/issue' } )
+      ? $attrs->find( { type => './metadata/itemLevel/issue' } )->value
+      : undef;
+    $return->{Volume} =
+        $attrs->find( { type => './metadata/itemLevel/volume' } )
+      ? $attrs->find( { type => './metadata/itemLevel/volume' } )->value
+      : undef;
+    $return->{"Item part title"} =
+        $attrs->find( { type => './metadata/itemOfInterestLevel/title' } )
+      ? $attrs->find( { type => './metadata/itemOfInterestLevel/title' } )
+      ->value
+      : undef;
+    $return->{"Item part pages"} =
+        $attrs->find( { type => './metadata/itemOfInterestLevel/pages' } )
+      ? $attrs->find( { type => './metadata/itemOfInterestLevel/pages' } )
+      ->value
+      : undef;
+    $return->{"Item part author"} =
+        $attrs->find( { type => './metadata/itemOfInterestLevel/author' } )
+      ? $attrs->find( { type => './metadata/itemOfInterestLevel/author' } )
+      ->value
+      : undef;
 
     return $return;
 }
